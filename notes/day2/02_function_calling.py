@@ -57,7 +57,9 @@ def chat_with_tools(user_question: str):
     print(f"\n👤 用户：{user_question}\n")
     messages = [{"role": "user", "content": user_question}]
 
+    round_idx = 0
     while True:
+        round_idx += 1
         resp = client.chat.completions.create(
             model=MODEL,
             messages=messages,
@@ -65,9 +67,13 @@ def chat_with_tools(user_question: str):
         )
         msg = resp.choices[0].message
 
+        # [DEBUG] 验证笔记卡壳问题：tool_calls 不调工具时是 None 还是 []？
+        print(f"[DEBUG Round {round_idx}] tool_calls type={type(msg.tool_calls).__name__} value={msg.tool_calls!r}")
+
         # 退出条件：LLM 不再调用工具，直接回答
         if not msg.tool_calls:
             print(f"🤖 最终回答：{msg.content}")
+            print(f"[DEBUG] 累计 messages={len(messages)} 条，共 {round_idx} 轮 LLM 调用\n")
             return
 
         # LLM 要求调用工具

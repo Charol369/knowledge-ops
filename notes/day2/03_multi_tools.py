@@ -117,9 +117,14 @@ def chat_with_tools(user_question: str, max_iterations: int = 10):
         )
         msg = resp.choices[0].message
 
+        # [DEBUG] 本轮 LLM 返回了几个 tool_calls？验证并行 vs 串行
+        n_calls = len(msg.tool_calls) if msg.tool_calls else 0
+        print(f"[DEBUG Round {i+1}] tool_calls 数量={n_calls} | type={type(msg.tool_calls).__name__}")
+
         # LLM 不再调工具，结束
         if not msg.tool_calls:
             print(f"\n🤖 最终回答：\n{msg.content}\n")
+            print(f"[DEBUG] 累计 messages={len(messages)} 条，共 {i+1} 轮 LLM 调用\n")
             return
 
         # 处理所有 tool_calls（LLM 可能一次返回多个）

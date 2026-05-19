@@ -7,16 +7,16 @@
 - [x] Anthropic Prompt Tutorial Chapter 1-3（基础结构 / 清晰 / 角色）
 - [x] Anthropic Prompt Tutorial Chapter 4-6（XML 分隔 / 格式 / CoT）
 - [x] Anthropic Prompt Tutorial Chapter 7-9（Few-shot / 防幻觉 / 综合）
-- [ ] `01_prompt_patterns.py` 跑通（4 种套路对比）
-- [ ] `02_function_calling.py` 跑通（单工具计算器）
-- [ ] `03_multi_tools.py` 跑通（多工具调度）
+- [x] `01_prompt_patterns.py` 跑通（4 种套路对比）
+- [x] `02_function_calling.py` 跑通（单工具计算器）
+- [x] `03_multi_tools.py` 跑通（多工具调度）
 - [ ] commit + push
 
 ## 🎯 今天 AHA Moment
 
-```
-（晚上 21:00 复盘时填）
-```
+1. **Function Calling 不是"LLM 调用函数"，而是"LLM 输出 JSON、Python 调函数"**——这一字之差决定了所有架构：LLM 端不需要任何执行环境，Python 端必须做所有兜底（非法 JSON、幻觉参数、不存在的工具）。
+2. **`while True` 不是为了重试，而是为了"多步推理"**——跑 02 测试 2 时，LLM 因为 `</` bug 连续 3 次 calculator 失败，第 4 轮干脆不调工具自己算出 5。这种**自适应放弃工具**是真正的 Agent 雏形。
+3. **DeepSeek 会泄漏 XML 标签到 arguments 里**（亲眼见 `</937parameter>\n`）——文档不会告诉的生产坑，靠卡壳清单逼自己跑出来才发现。**实战 > 文档**。
 
 ## 🔑 核心概念
 
@@ -377,13 +377,51 @@ LLM 综合工具结果，回答用户
 - `description`：什么时候用 **← 最重要！LLM 凭这个决定是否调用**
 - `parameters`：JSON Schema 描述入参
 
-## ❓ 卡壳记录
+## ❓ 卡壳记录 → 🧪 实测答案
+
+| # | 卡壳问题 | 实测答案 | 证据 |
+|---|---------|---------|------|
+| Q1 | `tool_calls` 不调工具时是 `None` 还是 `[]`？ | **`None`（NoneType）** | 02 Round 2 / 03 Round 3 全部 `type=NoneType value=None` |
+| Q2 | description 改"用来唱歌"还会调吗？ | 待做（破坏性实验，明天补） | —— |
+| Q3 | 多工具会并行还是串行返回？ | **DeepSeek 支持并行** | 03 测试 3 Round 1：`tool_calls 数量=2`（search_wiki + calculator 一次返回） |
+| Q4 | 支持 `parallel_tool_calls=False` 吗？ | 待验证（DeepSeek 文档未提） | —— |
+| Q5 | 不 append assistant 直接 append tool 会怎样？ | 待做（破坏性实验） | —— |
+
+> **写法上的双保险**：`if not msg.tool_calls:` —— `None` 和 `[]` 都会被 `not` 命中。
+
+---
+
+### 🐞 实测发现的生产坑：DeepSeek "XML 标签泄漏"
+
+跑 02/03 时多次出现：
 
 ```
-（遇到问题写这里，不要原地深挖）
+expression='sqrt(3^2 + 4^2)</'
+expression='fib(10) where ... fib(n-2)</937parameter>\n'
 ```
+
+`</`、`</937parameter>\n` 来自模型内部 chain-of-thought / 工具调用 XML 模板的**闭合标签泄漏**。文档不会告诉，亲跑才发现。
+
+**应对**：
+- 短期：`eval` 包 try/except（已有）
+- 中期：传给 `calculator` 前正则清洗 `</[^>]*>` 尾巴
+- 生产：换 Claude/GPT-4，或开 DeepSeek `strict` 模式（`base_url=/beta` + `strict: true`）
+
+---
+
+### 📊 LLM 调用成本观察
+
+| 测试 | 工具调用轮次 | LLM 调用次数 | messages 长度 |
+|------|------|------|------|
+| 02-1 简单计算 | 1 | 2 | 3 |
+| 02-2 勾股（3 次失败）| 3 | 4 | 7 |
+| 03-2 天气+换算（串行）| 2 | 3 | 5 |
+| 03-3 斐波那契（并行+重试）| 2 | 3 | 6 |
+
+**核心认知**：**1 个工具调用 = 至少 2 次 LLM 调用**（决策 + 综合）。这是 Function Calling **贵且慢**的根因，LangChain Agent 也没魔法。
 
 ## 💭 自由发挥
 
-```
-```
+- **对"Agent"祛魅**：所谓 Agent = 工具说明书（tools）+ 循环（while）+ 分发表（registry）+ LLM 决策。明天 LangChain 的 `AgentExecutor` 拆开看就这四样。
+- **Prompt 工程和 Function Calling 是同一件事的两面**：description 字段本质就是 system prompt 的微型版，决定 LLM 何时调；description 写得烂，再多工具也召不回。
+- **调试 LLM 的核心方法**：把每一轮的 `messages` 全部打印出来肉眼看。`[DEBUG Round N]` 这种打印加 2 行就值回票价。
