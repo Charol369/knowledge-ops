@@ -36,11 +36,11 @@ client.chat.completions.create(
 
 ### 流式 vs 非流式
 
-| | 非流式 | 流式 |
-|---|---|---|
+|          | 非流式         | 流式     |
+| -------- | ----------- | ------ |
 | `stream` | `False`（默认） | `True` |
-| 返回 | 完整对象 | 迭代器 |
-| 用户感知 | 等待→一次性出现 | 字符逐个冒出 |
+| 返回       | 完整对象        | 迭代器    |
+| 用户感知     | 等待→一次性出现    | 字符逐个冒出 |
 
 ### SSE 协议
 
@@ -58,16 +58,18 @@ data: [DONE]\n\n
 - 模型名跟着中转站走（`deepseek-v4-pro` 而非官方 `deepseek-chat`）
 - **合规风险**：秋招简历上写"DeepSeek 官方 API"，不要暴露用了中转
 
-## ❓ 卡壳记录（今天的 3 个坑 + 解决方案，**可作面试谈资**）
+## ❓ 卡壳记录（今天的 4 个坑 + 解决方案，**可作面试谈资**）
 
 ### ❌ 坑 1：`UnicodeEncodeError: 'gbk' codec can't encode character`
 
 **根因**：Windows PowerShell 控制台默认 GBK 编码，Python `print` emoji 时被 GBK 编码器卡住
 **解决**：脚本顶部加
+
 ```python
 import sys
 sys.stdout.reconfigure(encoding="utf-8")
 ```
+
 **深层教训**：跨平台代码不能假设运行环境编码，**程序自己控制 stdout 编码**才稳
 
 ### ❌ 坑 2：`AttributeError: 'str' object has no attribute 'choices'`
@@ -80,12 +82,14 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 **根因**：OpenAI SDK 2.x 流式协议——**最后一个 chunk 的 `choices` 是空列表**（只用来回传 `usage` 统计），不是真正的内容 chunk
 **解决**：循环里加防御
+
 ```python
 for chunk in stream:
     if not chunk.choices:  # 最后一个 usage-only chunk
         continue
     ...
 ```
+
 **深层教训**：**永远不要假设流式响应每个 chunk 结构相同**，要看 SDK 版本变更日志
 
 ### ❌ 坑 4：GitHub push TLS 错
