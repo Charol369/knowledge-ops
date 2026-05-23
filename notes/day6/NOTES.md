@@ -11,6 +11,8 @@
 - [x] `03_langfuse_chain.py`：graceful 无 key 降级跑通，等 Boss 注册 cloud.langfuse.com 拿 key 后看 trace
 - [x] `04_guardrails.py` 跑通：Pydantic structured_output（result 类型是 Answer 对象，confidence=0.95，sources 引用 Lewis 2020）+ injection 检测 4/6 命中（含 1 个故意误报示范）
 - [x] `.env` 补 LANGFUSE 三字段（PUBLIC_KEY/SECRET_KEY 留空，HOST 默认云端）
+- [x] **Langfuse cloud.langfuse.com 注册 + 拿 key + 03 重跑 + dashboard 截图存档**
+      （截图：`W1-知识速成周/Langfuse dashboard 截图.png`，4 条 trace 完整覆盖 RunnableSequence/ChatPromptTemplate/ChatOpenAI/StrOutputParser 链路）
 - [x] commit 入库
 
 ## 🎯 今天 AHA Moment
@@ -170,6 +172,31 @@ result = structured_llm.invoke("...")
 - **`get_prompt` 返回 messages 列表**：Prompt 不是单纯字符串，而是 `[(role, content), ...]` 结构——可以直接喂给 chat model 的 `messages` 参数。这是为什么 MCP Prompt 比 LangChain ChatPromptTemplate 更"可移植"。
 - **DeepSeek 走 Pydantic structured_output 速度比预期快**：04 跑完不到 5s 拿到完整对象，DeepSeek-v4-pro 对 Function Calling 协议的兼容性很好。
 - **injection 检测 6/6 没全中是正常的**：第 6 条故意误报，证明关键词检测的局限性。Boss 看到这个边界比看到"100% 命中"更有教育价值。
+
+### 🖼 Langfuse dashboard 截图观察（晚上补跑后的实测）
+
+截图：`W1-知识速成周/Langfuse dashboard 截图.png`
+
+| 维度 | 看到的内容 |
+|---|---|
+| 项目 | `knowledge-ops`（Hobby 计划） |
+| Tracing 列表 4 条 | `RunnableSequence(Root)` / `ChatPromptTemplate` / `ChatOpenAI(GENERATION)` / `StrOutputParser` |
+| Output 列验证 | "RAG（检索增强生成）让模型在回答时从外部知识库..."——跟 03 跑出的回答一致 |
+| Is Root Observation | True 1 / False 3 → 1 个根 trace + 3 个子 observation，chain step 拆解清晰 |
+| Type 列 | CHAIN(3) + GENERATION(1) → **GENERATION 才有 token/cost**，明确知道哪步烧钱 |
+
+**Langfuse vs LangSmith 列表视图对比**（同样跑了同款 `prompt | llm | parser` chain）：
+
+| | LangSmith（Day3 截图） | Langfuse（Day6 截图） |
+|---|---|---|
+| 列表粒度 | trace 维度（一行一次完整调用） | **step 维度（chain 内每个组件独立成行）** |
+| Type 区分 | 主要看 Run Type | **CHAIN / GENERATION 强区分**（成本归因更直接） |
+| 根/子筛选 | -- | **Is Root Observation 一键切换** |
+| 视觉密度 | 一眼看 trace 整体 | 一眼看 chain 拆解 |
+
+Langfuse 的工程化设计更"可观测性原生"——这就是它能切 OpenTelemetry 的本质（每个 observation 就是一个 OTel span）。
+
+> SDK 版本警告（顶部黄条）：Cloud dashboard 升级到 v3.175 对 SDK 版本提示。当前 langfuse 4.6.1 功能正常，非紧急。下次想升级跑 `uv add langfuse --upgrade`。
 
 ## 💭 自由发挥
 
