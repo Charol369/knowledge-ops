@@ -1,0 +1,3 @@
+{"question": "什么是 RAG？", "ground_truth": "RAG 是检索增强生成，结合外部知识库回答问题。"}
+{"question": "Transformer 用了什么注意力机制？", "ground_truth": "Transformer 用了 multi-head self-attention 多头自注意力。"}
+{"question": "MCP 协议和 Function Calling 的区别？", "ground_truth": "MCP 是跨厂商标准，工具可被任意 MCP Client 复用；Function Calling 是 OpenAI 私有约定。"}
