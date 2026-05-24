@@ -1,0 +1,77 @@
+# KnowledgeOps · 完整部署 stack（Sprint 4 LLMOps 用）
+# 用法：docker compose up -d
+#
+# W1 末骨架版：定义服务但不强制 Boss 现在跑 docker（Day6 已经证明云端 Langfuse + FAISS 就够 W1-Sprint 3 用）。
+# Sprint 4 真正切到自托管 LLMOps 时再 docker compose up。
+
+services:
+  # =============== Vector DB ===============
+  milvus:
+    image: milvusdb/milvus:v2.4.10
+    container_name: knowledge-ops-milvus
+    command: ["milvus", "run", "standalone"]
+    environment:
+      - ETCD_USE_EMBED=true
+      - ETCD_DATA_DIR=/var/lib/milvus/etcd
+      - COMMON_STORAGETYPE=local
+    volumes:
+      - ./data/milvus:/var/lib/milvus
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # =============== LLMOps Observability ===============
+  langfuse-postgres:
+    image: postgres:16
+    container_name: knowledge-ops-langfuse-db
+    environment:
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: langfuse_dev_password
+      POSTGRES_DB: langfuse
+    volumes:
+      - ./data/langfuse-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langfuse"]
+      interval: 10s
+
+  langfuse:
+    image: langfuse/langfuse:3
+    container_name: knowledge-ops-langfuse
+    depends_on:
+      langfuse-postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://langfuse:langfuse_dev_password@langfuse-postgres:5432/langfuse
+      NEXTAUTH_SECRET: change-me-in-prod
+      SALT: change-me-in-prod
+      NEXTAUTH_URL: http://localhost:3000
+      TELEMETRY_ENABLED: "false"
+    ports:
+      - "3000:3000"
+
+  # =============== App ===============
+  app:
+    build: .
+    container_name: knowledge-ops-app
+    depends_on:
+      milvus:
+        condition: service_healthy
+      langfuse:
+        condition: service_started
+    environment:
+      MILVUS_URI: http://milvus:19530
+      LANGFUSE_HOST: http://langfuse:3000
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data/pdfs:/app/data/pdfs
+
+# TODO Sprint 4: 加 nginx reverse proxy + Let's Encrypt
+# TODO Sprint 5: 加 ElasticSearch（如果稀疏检索规模 > rank-bm25 能撑的范围）
