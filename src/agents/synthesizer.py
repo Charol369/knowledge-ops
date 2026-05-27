@@ -24,4 +24,5 @@ class Synthesizer:
 
 def synthesizer_node(state: dict[str, Any]) -> dict[str, Any]:
     synthesis = Synthesizer().synthesize(state.get("evidence", []))
-    return {**state, "synthesis": synthesis}
+    execution_path = [*state.get("execution_path", []), "synthesizer"]
+    return {**state, "synthesis": synthesis, "execution_path": execution_path}

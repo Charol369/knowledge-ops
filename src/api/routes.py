@@ -6,9 +6,17 @@ question -> policy -> graph -> artifacts -> response / stream
 """
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
-from src.api.schemas import IngestRequest, IngestResponse, QueryRequest, QueryResponse
+from src.agents.graph import run_research_graph
+from src.api.schemas import (
+    Citation,
+    IngestRequest,
+    IngestResponse,
+    QueryRequest,
+    QueryResponse,
+    ResearchStep,
+)
 from src.ingest.loaders import load_directory, load_docx, load_html, load_pdf
 from src.ingest.splitters import split_recursive
 
@@ -18,11 +26,41 @@ router = APIRouter()
 @router.post("/query", response_model=QueryResponse)
 async def query(req: QueryRequest):
     """主入口：用户问题 -> policy layer -> agent graph -> 结构化研究结果。"""
-    # TODO Sprint 1: 支持最小 CLI / API research pipeline
-    # TODO Sprint 3: 接到 src.agents.graph.build_graph().invoke(...)
-    # TODO Sprint 4: 接入 complexity classifier / model router / langfuse / injection 检测
-    # TODO Sprint 5: 切 SSE 流式响应，返回 plan / progress / evidence / final report
-    raise HTTPException(status_code=501, detail="Not implemented yet (Sprint 1-5)")
+    result = run_research_graph(
+        question=req.question,
+        thread_id=req.thread_id,
+        docs_dir=req.docs_dir,
+        index_dir=req.index_dir,
+        artifact_root=req.artifact_root,
+        embedding_backend=req.embedding_backend,
+    )
+    verification = result.get("verification", {})
+    plan = [
+        ResearchStep(
+            step_id=str(index),
+            description=step,
+            status="completed",
+        )
+        for index, step in enumerate(result.get("plan", []), start=1)
+    ]
+    citations = [
+        Citation(
+            source=str(item.get("source", "")),
+            page=item.get("page"),
+            snippet=item.get("snippet"),
+        )
+        for item in result.get("citations", [])
+    ]
+    return QueryResponse(
+        answer=result.get("answer", ""),
+        confidence=float(verification.get("confidence", result.get("confidence", 0.0))),
+        plan=plan,
+        citations=citations,
+        model_tier_used=result.get("model_tier"),
+        artifact_session_id=result.get("artifact_session_id"),
+        trace_id=result.get("trace_id"),
+        needs_human_review=bool(result.get("needs_human_review", False)),
+    )
 
 
 @router.post("/ingest", response_model=IngestResponse)

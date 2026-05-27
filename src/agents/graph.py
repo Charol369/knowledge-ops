@@ -7,7 +7,9 @@
 
 当前阶段先把图结构和状态模式固定下来，具体业务逻辑按 Sprint 1-4 逐步填充。
 """
-from typing import Literal, TypedDict
+from pathlib import Path
+from typing import Any, Literal, TypedDict
+from uuid import uuid4
 
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
@@ -17,6 +19,8 @@ from src.agents.planner import planner_node
 from src.agents.reporter import reporter_node
 from src.agents.synthesizer import synthesizer_node
 from src.agents.verifier import verifier_node
+from src.config import settings
+from src.retrieval.artifact_store import ArtifactStore
 
 
 class AgentState(TypedDict):
@@ -25,21 +29,29 @@ class AgentState(TypedDict):
     complexity: str | None
     model_tier: str | None
     plan: list[str]
-    context: list[str]
+    context: dict[str, Any]
     evidence: list[dict]
     synthesis: str
     answer: str
     citations: list[dict]
+    confidence: float
+    structured_answer: dict | None
+    verification: dict
     artifact_session_id: str | None
     trace_id: str | None
     requires_reflection: bool
     needs_human_review: bool
+    execution_path: list[str]
+    blocked_reason: str | None
+    docs_dir: str
+    index_dir: str
+    embedding_backend: str
+    top_k: int
+    artifact_context: dict[str, Any] | None
 
 
 def route_after_reporter(state: AgentState) -> Literal["verifier", "finish"]:
-    if state["requires_reflection"]:
-        return "verifier"
-    return "finish"
+    return "verifier"
 
 
 def build_graph():
@@ -66,3 +78,54 @@ def build_graph():
     graph.add_edge("verifier", END)
 
     return graph.compile(checkpointer=MemorySaver())
+
+
+def run_research_graph(
+    question: str,
+    thread_id: str | None = None,
+    docs_dir: str | Path = "data",
+    index_dir: str | Path = "data/faiss/sprint1",
+    artifact_root: str | Path | None = None,
+    evidence: list[dict] | None = None,
+    embedding_backend: str = "hash",
+) -> dict[str, Any]:
+    """Run the Sprint 3 graph locally with MemorySaver checkpointing."""
+    trace_id = thread_id or uuid4().hex
+    store = ArtifactStore(root_dir=artifact_root or settings.artifact_root_dir)
+    session_id = store.create_session(question)
+    initial_state: dict[str, Any] = {
+        "question": question,
+        "intent": None,
+        "complexity": None,
+        "model_tier": "tier2",
+        "plan": [],
+        "context": {},
+        "evidence": list(evidence or []),
+        "synthesis": "",
+        "answer": "",
+        "citations": [],
+        "confidence": 0.0,
+        "structured_answer": None,
+        "verification": {},
+        "artifact_session_id": session_id,
+        "trace_id": trace_id,
+        "requires_reflection": True,
+        "needs_human_review": False,
+        "execution_path": [],
+        "blocked_reason": None,
+        "docs_dir": str(docs_dir),
+        "index_dir": str(index_dir),
+        "embedding_backend": embedding_backend,
+        "top_k": settings.top_k_final,
+        "artifact_context": None,
+    }
+    result = build_graph().invoke(
+        initial_state,
+        config={"configurable": {"thread_id": trace_id}},
+    )
+    store.save_plan(session_id, result.get("plan", []))
+    store.save_evidence(session_id, result.get("evidence", []))
+    store.save_final_answer(session_id, result.get("answer", ""))
+    result["artifact_session_id"] = session_id
+    result["trace_id"] = trace_id
+    return result

@@ -1,4 +1,6 @@
 """API 请求/响应 Pydantic 模型。"""
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -6,6 +8,13 @@ class QueryRequest(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
     intent: str | None = Field(default=None, description="可选：lookup/research/report，不传则由 policy layer 判定")
     thread_id: str | None = Field(default=None, description="可选：会话 ID，用于隔离 graph checkpointer 与 artifact session")
+    docs_dir: str = Field(default="data", description="Sprint 3 local documents directory.")
+    index_dir: str = Field(default="data/faiss/sprint1", description="Sprint 3 local FAISS index directory.")
+    artifact_root: str | None = Field(default=None, description="Optional Sprint 3 artifact root directory.")
+    embedding_backend: Literal["hash", "local", "fake", "huggingface"] = Field(
+        default="hash",
+        description="Embedding backend for local graph retrieval; hash is the offline Sprint 3 default.",
+    )
 
 
 class ResearchStep(BaseModel):

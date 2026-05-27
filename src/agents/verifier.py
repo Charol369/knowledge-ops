@@ -1,12 +1,66 @@
 """Verifier / Reflection：高价值请求的选择性校验节点。"""
 from typing import Any
 
+from pydantic import ValidationError
+
+from src.guardrails.citation import verify_citations
+from src.guardrails.output_schema import Answer
+
 
 class Verifier:
-    def verify(self, answer: str, citations: list[dict]) -> dict[str, Any]:
-        raise NotImplementedError
+    def verify(
+        self,
+        answer: str,
+        citations: list[dict],
+        evidence: list[dict] | None = None,
+    ) -> dict[str, Any]:
+        if not citations:
+            return {
+                "status": "needs_human_review",
+                "confidence": 0.0,
+                "invalid_citations": ["<missing-citations>"],
+                "needs_human_review": True,
+            }
+
+        citations_valid, invalid = verify_citations(citations, evidence or [])
+        confidence = 0.85 if citations_valid else 0.2
+        try:
+            structured = Answer(
+                answer=answer,
+                confidence=confidence,
+                citations=citations,
+                needs_human_review=not citations_valid,
+            )
+        except ValidationError as exc:
+            return {
+                "status": "validation_failed",
+                "confidence": 0.0,
+                "invalid_citations": invalid,
+                "needs_human_review": True,
+                "validation_error": str(exc),
+            }
+
+        return {
+            "status": "ok" if citations_valid else "unsupported_citations",
+            "confidence": confidence,
+            "invalid_citations": invalid,
+            "needs_human_review": not citations_valid,
+            "structured_answer": structured.model_dump(),
+        }
 
 
 def verifier_node(state: dict[str, Any]) -> dict[str, Any]:
-    # TODO Sprint 3: 只在复杂研究 / 最终报告 / 冲突证据时启用
-    raise NotImplementedError
+    verification = Verifier().verify(
+        answer=state.get("answer", ""),
+        citations=state.get("citations", []),
+        evidence=state.get("context", {}).get("evidence", state.get("evidence", [])),
+    )
+    execution_path = [*state.get("execution_path", []), "verifier"]
+    return {
+        **state,
+        "verification": verification,
+        "confidence": verification.get("confidence", 0.0),
+        "needs_human_review": verification.get("needs_human_review", True),
+        "structured_answer": verification.get("structured_answer"),
+        "execution_path": execution_path,
+    }

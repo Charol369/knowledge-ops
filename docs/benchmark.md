@@ -1,6 +1,6 @@
 # 性能基准报告
 
-> Sprint 1-2 只记录本地 smoke baseline。未运行的评测指标保持待测，不编造结果。
+> Sprint 1-3 只记录本地 smoke baseline。未运行的评测指标保持待测，不编造结果。
 
 ## Sprint 1 本地基线
 
@@ -31,6 +31,24 @@
 | `uv run python scripts/benchmark.py --retrieval dense,hybrid --top-k 5` | dense `0.037620099959895015s`; hybrid `0.003779200022108853s` | 输出 `status=ok`，`documents=93`，dense returned `5`，hybrid returned `5`，sources 均来自 `data\\attention_is_all_you_need.pdf` |
 
 未测项：Recall@5、RAGAS Faithfulness、Answer Relevancy、端到端 P95 延迟、单 query 成本、最大并发 / QPS 均未在 Sprint 2 smoke 中计算，保持待测。
+
+## Sprint 3 本地 Graph / API / MCP Smoke
+
+测试日期：2026-05-28
+
+测试环境：Windows 本地开发环境，Python 3.11.15，`uv run`，本地 fixture / tmp 目录。
+
+嵌入后端：`hash`，即 `LocalHashEmbeddings` 本地确定性 fallback。该结果只证明 LangGraph、citation validation、API query 和 MCP tool wiring 可运行，不代表真实语义检索质量。
+
+| 命令 | 结果 | 本地输出来源 |
+|---|---:|---|
+| `uv run pytest tests/unit/test_agents.py tests/unit/test_citation.py tests/integration/test_query_api.py tests/integration/test_mcp_server.py` | `9 passed, 3 warnings` | 输出 graph/citation/query API/MCP Sprint 3 测试全部通过；warnings 来自 FAISS/SWIG 第三方类型 |
+| `uv run pytest tests/unit/test_retrieval.py tests/unit/test_context_builder.py` | `10 passed, 3 warnings` | 输出 Sprint 1-2 retrieval/context 回归测试通过；warnings 来自 FAISS/SWIG 第三方类型 |
+| `uv run python -c "from src.main import app; print(app.title)"` | `KnowledgeOps` | FastAPI app import-level smoke |
+| `uv run python -c "from src.mcp.server import mcp; print(mcp.name if hasattr(mcp, 'name') else 'knowledge-ops')"` | `knowledge-ops` | MCP server import-level smoke |
+| `uv run python -m src.mcp.server --help` | blocked | 当前模块入口会启动 `mcp.run(transport="stdio")`，不是 bounded help/CLI mode，按 Sprint 3 goal 不作为无界 smoke 启动 |
+
+未测项：Claude Desktop GUI 端到端接入、真实 MCP client 手动配置、真实 bge-m3 检索质量、Recall@5、RAGAS Faithfulness、P95 延迟、成本和 QPS 均未在 Sprint 3 smoke 中计算，保持待测或人工边界。
 
 ## 测试环境（计划）
 

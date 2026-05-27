@@ -33,9 +33,11 @@ def planner_node(state: dict[str, Any]) -> dict[str, Any]:
     planner = ResearchPlanner()
     question = state["question"]
     plan = planner.plan(question)
+    execution_path = [*state.get("execution_path", []), "planner"]
     return {
         **state,
         "plan": plan,
         "requires_research": planner.needs_research(question),
         "complexity": "standard" if planner.needs_research(question) else "simple",
+        "execution_path": execution_path,
     }
