@@ -7,6 +7,14 @@ from langchain_core.embeddings import Embeddings
 from src.main import app
 from src.retrieval.artifact_store import ArtifactStore
 from src.retrieval.dense import build_index, load_index, search
+from src.retrieval.hybrid import reciprocal_rank_fusion
+from src.retrieval.query_transform import (
+    decompose_query,
+    hyde_transform,
+    multi_query_expand,
+)
+from src.retrieval.rerank import CrossEncoderReranker
+from src.retrieval.sparse import BM25Retriever
 
 
 class KeywordEmbeddings(Embeddings):
@@ -76,3 +84,73 @@ def test_ingest_endpoint_validates_request_and_no_longer_returns_501(tmp_path: P
     assert body["status"] == "ok"
     assert body["documents_loaded"] == 1
     assert body["chunks_created"] >= 1
+
+
+def test_bm25_sparse_retriever_prioritizes_exact_terms_and_preserves_source():
+    docs = [
+        Document(page_content="Transformer attention uses multi head self attention.", metadata={"source": "paper.md", "page": 1}),
+        Document(page_content="Milvus stores vector embeddings for semantic retrieval.", metadata={"source": "vector.md"}),
+        Document(page_content="RAG combines retrieval with generation.", metadata={"source": "rag.md"}),
+    ]
+
+    results = BM25Retriever(docs).search("multi head attention", k=2)
+
+    assert results[0].metadata["source"] == "paper.md"
+    assert results[0].metadata["page"] == 1
+    assert len(results) == 2
+
+
+def test_rrf_fuses_rankings_deduplicates_and_preserves_metadata():
+    shared = Document(page_content="shared transformer evidence", metadata={"source": "shared.md", "page": 2})
+    dense_only = Document(page_content="dense semantic evidence", metadata={"source": "dense.md"})
+    sparse_only = Document(page_content="sparse keyword evidence", metadata={"source": "sparse.md"})
+
+    fused = reciprocal_rank_fusion(
+        [[dense_only, shared], [shared, sparse_only]],
+        k=10,
+        top_n=3,
+    )
+
+    assert [doc.metadata["source"] for doc in fused] == ["shared.md", "dense.md", "sparse.md"]
+    assert fused[0].metadata["page"] == 2
+    assert "rrf_score" in fused[0].metadata
+
+
+def test_cross_encoder_reranker_can_use_local_scorer_without_model_download():
+    docs = [
+        Document(page_content="irrelevant cache policy", metadata={"source": "cache.md"}),
+        Document(page_content="Transformer attention and encoder decoder architecture", metadata={"source": "transformer.md"}),
+    ]
+    reranker = CrossEncoderReranker(
+        scorer=lambda query, doc: 10.0 if "attention" in doc.lower() else 1.0
+    )
+
+    result = reranker.rerank("attention mechanism", docs, top_k=1)
+
+    assert result.status == "ok"
+    assert result.documents[0].metadata["source"] == "transformer.md"
+    assert result.documents[0].metadata["rerank_score"] == 10.0
+
+
+def test_cross_encoder_reranker_reports_precise_blocked_reason_without_local_model():
+    reranker = CrossEncoderReranker(model_name="local/missing-reranker")
+
+    result = reranker.rerank("query", [Document(page_content="content", metadata={"source": "a.md"})])
+
+    assert result.status == "blocked"
+    assert result.documents == []
+    assert "local/missing-reranker" in result.blocked_reason
+
+
+def test_query_transforms_are_independently_callable_without_langgraph():
+    query = "Compare RAG and function calling, then explain MCP reuse."
+
+    hyde = hyde_transform(query)
+    rewrites = multi_query_expand(query, n=3)
+    subquestions = decompose_query(query)
+
+    assert query in hyde
+    assert len(rewrites) == 3
+    assert rewrites[0] == query
+    assert any("RAG" in item for item in subquestions)
+    assert any("MCP" in item for item in subquestions)

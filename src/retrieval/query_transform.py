@@ -1,25 +1,85 @@
-"""查询变换：HyDE / Multi-Query / Query Decomposition
-
-为什么需要：用户的原始 query 往往**口语化**或**信息不足**，直接拿去检索召回率低。
-查询变换让 LLM 先"翻译"成更检索友好的 N 个变体。
-
-技术：
-  - HyDE (Hypothetical Document Embeddings)：让 LLM 写一段"假答案"，用假答案的
-    embedding 去检索（往往比 query 本身更接近真正答案的 embedding）
-  - Multi-Query：用 LLM 生成 query 的 3-5 个改写版本，分别检索后融合
-  - Decomposition：把复杂多跳问题拆成子问题分别检索
-
-Sprint 2 任务。
-"""
+"""查询变换：HyDE / Multi-Query / Query Decomposition."""
+import re
+from collections.abc import Callable
+from typing import Any
 
 
-def hyde_transform(query: str, llm) -> str:
+def _call_llm(llm: Any, prompt: str) -> str:
+    if callable(llm):
+        result = llm(prompt)
+    elif hasattr(llm, "invoke"):
+        result = llm.invoke(prompt)
+    else:
+        raise TypeError("llm must be callable or expose invoke(prompt).")
+    if hasattr(result, "content"):
+        return str(result.content).strip()
+    return str(result).strip()
+
+
+def hyde_transform(query: str, llm: Callable[[str], str] | Any | None = None) -> str:
     """HyDE：让 LLM 生成一段假答案用于检索"""
-    # TODO Sprint 2: prompt = "Write a passage that would answer: {query}"
-    raise NotImplementedError
+    normalized = query.strip()
+    if not normalized:
+        return ""
+    prompt = f"Write a concise hypothetical passage that would answer: {normalized}"
+    if llm is not None:
+        return _call_llm(llm, prompt)
+    return (
+        "Hypothetical answer passage for retrieval. "
+        f"Question: {normalized}. "
+        "Include core entities, terminology, and likely evidence phrases."
+    )
 
 
-def multi_query_expand(query: str, llm, n: int = 3) -> list[str]:
+def multi_query_expand(
+    query: str,
+    llm: Callable[[str], str] | Any | None = None,
+    n: int = 3,
+) -> list[str]:
     """生成 N 个查询改写"""
-    # TODO Sprint 2: prompt = "Generate {n} different rewrites of: {query}"
-    raise NotImplementedError
+    normalized = query.strip()
+    if n <= 0 or not normalized:
+        return []
+    if llm is not None:
+        prompt = f"Generate {n} different search query rewrites of: {normalized}"
+        raw = _call_llm(llm, prompt)
+        candidates = [
+            re.sub(r"^\s*[-*\d.)]+\s*", "", line).strip()
+            for line in raw.splitlines()
+            if line.strip()
+        ]
+    else:
+        candidates = [
+            normalized,
+            f"{normalized} key concepts evidence",
+            f"{normalized} definitions comparison",
+            f"{normalized} implementation details",
+            f"{normalized} citations sources",
+        ]
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        if candidate and candidate not in seen:
+            deduped.append(candidate)
+            seen.add(candidate)
+        if len(deduped) == n:
+            break
+    while len(deduped) < n:
+        deduped.append(f"{normalized} variant {len(deduped) + 1}")
+    return deduped
+
+
+def decompose_query(query: str) -> list[str]:
+    """把多跳问题拆成可独立检索的子问题；不依赖 LangGraph。"""
+    normalized = query.strip()
+    if not normalized:
+        return []
+    parts = [
+        part.strip(" .?？")
+        for part in re.split(r"\bthen\b|\band\b|[;；。？?]", normalized, flags=re.IGNORECASE)
+        if part.strip(" .?？")
+    ]
+    if len(parts) <= 1:
+        return [normalized]
+    return [f"{part}?" for part in parts]

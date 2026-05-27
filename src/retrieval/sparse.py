@@ -1,21 +1,41 @@
-"""稀疏检索（BM25）
+"""稀疏检索（BM25）。"""
+import re
 
-为什么需要：稠密向量擅长语义匹配，但 **关键词类查询**（人名 / 型号 / 法条号 /
-专业术语）稀疏 BM25 反而更准。Hybrid 是 RAG baseline 必备。
-
-Sprint 2 任务。
-"""
 from langchain_core.documents import Document
+from rank_bm25 import BM25Okapi
+
+
+def _tokenize(text: str) -> list[str]:
+    """Small local tokenizer for English terms and CJK characters without new deps."""
+    lower = text.lower()
+    latin_terms = re.findall(r"[a-z0-9_]+", lower)
+    cjk_chars = re.findall(r"[\u4e00-\u9fff]", lower)
+    return latin_terms + cjk_chars
 
 
 class BM25Retriever:
     """BM25 稀疏检索器，基于 rank-bm25 包"""
 
     def __init__(self, docs: list[Document]):
-        # TODO Sprint 2: 用 rank-bm25 的 BM25Okapi 建索引
-        # 注意中文需要 jieba 分词，英文用 simple split
-        raise NotImplementedError
+        if not docs:
+            raise ValueError("Cannot build a BM25 retriever from an empty document list.")
+        missing_source = [doc for doc in docs if "source" not in doc.metadata]
+        if missing_source:
+            raise ValueError("BM25 evidence documents must include source metadata.")
+        self.docs = docs
+        self.tokenized_docs = [_tokenize(doc.page_content) for doc in docs]
+        self.index = BM25Okapi(self.tokenized_docs)
 
     def search(self, query: str, k: int = 10) -> list[Document]:
-        # TODO Sprint 2: 返回 top-k chunks
-        raise NotImplementedError
+        if k <= 0:
+            return []
+        tokens = _tokenize(query)
+        if not tokens:
+            return []
+        scores = self.index.get_scores(tokens)
+        ranked = sorted(
+            enumerate(scores),
+            key=lambda item: (float(item[1]), -item[0]),
+            reverse=True,
+        )
+        return [self.docs[index] for index, _ in ranked[:k]]
