@@ -1,6 +1,21 @@
 # 性能基准报告
 
-> 占位文档。Sprint 2 末跑出基线，Sprint 5 末跑出最终成绩。
+> Sprint 1 只记录本地最小研究闭环 smoke baseline。未运行的评测指标保持待测，不编造结果。
+
+## Sprint 1 本地基线
+
+测试日期：2026-05-27
+
+测试环境：Windows 本地开发环境，Python 3.11.15，`uv run`，本地样本目录 `data`。
+
+嵌入后端：`hash`，即 `LocalHashEmbeddings` 本地确定性 fallback。该结果用于证明 Sprint 1 本地闭环可运行，不代表 `bge-m3` 真实语义检索质量。
+
+| 命令 | 结果 | 本地输出来源 |
+|---|---:|---|
+| `uv run python scripts/ingest_pdfs.py data` | `2.1549639999866486s` | 输出 `status=ok`，`documents_loaded=15`，`chunks_created=93`，`index_dir=data\\faiss\\sprint1` |
+| `uv run python scripts/run_research_loop.py --question "Summarize the indexed evidence"` | `0.245924900053069s` | 输出 `status=ok`，生成 3-step plan、5 条 evidence、`session_id=20260527T155014Z-922de924` |
+
+未测项：Recall@5、RAGAS Faithfulness、Answer Relevancy、P95 延迟、单 query 成本、最大并发均未在 Sprint 1 运行，保持待测。
 
 ## 测试环境（计划）
 

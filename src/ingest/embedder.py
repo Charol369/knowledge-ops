@@ -1,20 +1,44 @@
-"""嵌入模型封装
+import hashlib
+import math
+import re
 
-Sprint 1 baseline：bge-small-en/zh-v1.5（Day4 已用过）
-Sprint 2 升级：bge-m3 多语言 1024 维（架构图设计的目标模型）
-"""
+from langchain_core.embeddings import Embeddings
 from langchain_huggingface import HuggingFaceEmbeddings
+
 from src.config import settings
 
 
-def get_embedder(model_name: str | None = None) -> HuggingFaceEmbeddings:
-    """统一的 embedder 入口。normalize_embeddings=True：内积即余弦相似度（Day4 笔记）"""
+class LocalHashEmbeddings(Embeddings):
+    """Deterministic local embeddings for Sprint 1 tests and offline smoke runs."""
+
+    def __init__(self, dimensions: int = 64):
+        self.dimensions = dimensions
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        return [self._embed(text) for text in texts]
+
+    def embed_query(self, text: str) -> list[float]:
+        return self._embed(text)
+
+    def _embed(self, text: str) -> list[float]:
+        vector = [0.0] * self.dimensions
+        tokens = re.findall(r"[\w\u4e00-\u9fff]+", text.lower())
+        for token in tokens or [text.lower()]:
+            digest = hashlib.sha256(token.encode("utf-8")).digest()
+            index = int.from_bytes(digest[:4], "big") % self.dimensions
+            sign = 1.0 if digest[4] % 2 == 0 else -1.0
+            vector[index] += sign
+        norm = math.sqrt(sum(value * value for value in vector))
+        if norm == 0:
+            return vector
+        return [value / norm for value in vector]
+
+
+def get_embedder(model_name: str | None = None, backend: str = "huggingface") -> Embeddings:
+    """统一的 embedder 入口；默认仍优先使用配置中的 bge-m3。"""
+    if backend in {"local", "fake", "hash"}:
+        return LocalHashEmbeddings()
     return HuggingFaceEmbeddings(
         model_name=model_name or settings.embed_model,
         encode_kwargs={"normalize_embeddings": True},
     )
-
-
-# TODO Sprint 1: embed_documents 批量接口（用于离线建库）
-# TODO Sprint 1: embed_query 单条接口（用于在线查询）
-# TODO Sprint 4: 加 redis cache 避免重复 embedding（query 重复率高的场景）

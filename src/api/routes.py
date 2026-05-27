@@ -4,9 +4,13 @@
 即使当前仍是骨架，也要把最终的数据流设计清楚：
 question -> policy -> graph -> artifacts -> response / stream
 """
+from pathlib import Path
+
 from fastapi import APIRouter, HTTPException
 
-from src.api.schemas import QueryRequest, QueryResponse
+from src.api.schemas import IngestRequest, IngestResponse, QueryRequest, QueryResponse
+from src.ingest.loaders import load_directory, load_docx, load_html, load_pdf
+from src.ingest.splitters import split_recursive
 
 router = APIRouter()
 
@@ -21,9 +25,71 @@ async def query(req: QueryRequest):
     raise HTTPException(status_code=501, detail="Not implemented yet (Sprint 1-5)")
 
 
-@router.post("/ingest")
-async def ingest():
+@router.post("/ingest", response_model=IngestResponse)
+async def ingest(req: IngestRequest):
     """批量入库接口（admin 用）。"""
-    # TODO Sprint 1: 接到 src.ingest pipeline
-    # TODO Sprint 4: 加鉴权 / 限流 / 审计日志
-    raise HTTPException(status_code=501, detail="Not implemented yet (Sprint 1)")
+    path = Path(req.path)
+    if not path.exists():
+        return IngestResponse(
+            status="blocked",
+            path=str(path),
+            blocked_reason=f"Local ingest path does not exist: {path}",
+        )
+
+    try:
+        if path.is_dir():
+            docs = load_directory(path, glob=req.glob)
+        elif path.suffix.lower() == ".pdf":
+            docs = load_pdf(path)
+        elif path.suffix.lower() == ".docx":
+            docs = load_docx(path)
+        elif path.suffix.lower() in {".html", ".htm"}:
+            docs = load_html(path)
+        else:
+            return IngestResponse(
+                status="blocked",
+                path=str(path),
+                blocked_reason=f"Unsupported local ingest file type: {path.suffix}",
+            )
+        chunks = split_recursive(docs)
+    except Exception as exc:
+        return IngestResponse(
+            status="blocked",
+            path=str(path),
+            blocked_reason=f"Local ingest failed: {exc}",
+        )
+
+    if not chunks:
+        return IngestResponse(
+            status="blocked",
+            path=str(path),
+            documents_loaded=len(docs),
+            chunks_created=0,
+            blocked_reason="No supported local content was loaded from the requested path.",
+        )
+
+    index_dir = req.index_dir
+    if req.build_index:
+        try:
+            from src.ingest.embedder import get_embedder
+            from src.retrieval.dense import build_index
+
+            target_index_dir = index_dir or "./data/faiss/api_ingest"
+            build_index(chunks, get_embedder(), index_dir=target_index_dir)
+            index_dir = target_index_dir
+        except Exception as exc:
+            return IngestResponse(
+                status="blocked",
+                path=str(path),
+                documents_loaded=len(docs),
+                chunks_created=len(chunks),
+                blocked_reason=f"Local FAISS indexing blocked: {exc}",
+            )
+
+    return IngestResponse(
+        status="ok",
+        path=str(path),
+        documents_loaded=len(docs),
+        chunks_created=len(chunks),
+        index_dir=index_dir,
+    )

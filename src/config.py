@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    deepseek_api_key: str
+    deepseek_api_key: str = ""
     deepseek_base_url: str = "https://api.deepseek.com"
     deepseek_model: str = "deepseek-chat"
 
@@ -26,10 +26,10 @@ class Settings(BaseSettings):
     top_k_dense: int = 10
     top_k_sparse: int = 10
     top_k_final: int = 5
-    max_plan_steps: int = 5
+    max_plan_steps: int = 4
     max_reflection_rounds: int = 1
 
-    artifact_root_dir: str = "./artifacts"
+    artifact_root_dir: str = "./data/artifacts"
     cache_ttl_seconds: int = 3600
 
     max_tokens: int = 2048

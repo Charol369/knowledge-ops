@@ -10,9 +10,18 @@ from typing import Any
 
 class Synthesizer:
     def synthesize(self, evidence: list[dict]) -> str:
-        raise NotImplementedError
+        if not evidence:
+            return "No local evidence was retrieved, so no grounded synthesis is available."
+        lines = []
+        for index, item in enumerate(evidence, start=1):
+            source = item.get("source", "unknown source")
+            page = item.get("page")
+            content = str(item.get("content", "")).strip()
+            citation = f"{source}, page {page}" if page is not None else source
+            lines.append(f"{index}. {content} [source: {citation}]")
+        return "\n".join(lines)
 
 
 def synthesizer_node(state: dict[str, Any]) -> dict[str, Any]:
-    # TODO Sprint 3: 按子任务聚合 evidence -> synthesis
-    raise NotImplementedError
+    synthesis = Synthesizer().synthesize(state.get("evidence", []))
+    return {**state, "synthesis": synthesis}

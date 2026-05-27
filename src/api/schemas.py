@@ -29,3 +29,19 @@ class QueryResponse(BaseModel):
     artifact_session_id: str | None = None
     trace_id: str | None = None
     needs_human_review: bool = False
+
+
+class IngestRequest(BaseModel):
+    path: str = Field(min_length=1, description="Local file or directory path to ingest.")
+    glob: str = Field(default="**/*", min_length=1)
+    build_index: bool = Field(default=False, description="Build a local FAISS index after loading.")
+    index_dir: str | None = Field(default=None, description="Optional local FAISS index directory.")
+
+
+class IngestResponse(BaseModel):
+    status: str
+    path: str
+    documents_loaded: int = 0
+    chunks_created: int = 0
+    index_dir: str | None = None
+    blocked_reason: str | None = None

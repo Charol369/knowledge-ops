@@ -4,9 +4,13 @@ from typing import Any
 
 class Reporter:
     def render(self, question: str, synthesis: str) -> str:
-        raise NotImplementedError
+        return (
+            f"Question: {question}\n\n"
+            "Answer grounded in local evidence:\n"
+            f"{synthesis}"
+        )
 
 
 def reporter_node(state: dict[str, Any]) -> dict[str, Any]:
-    # TODO Sprint 3: 输出 answer + citations + needs_human_review
-    raise NotImplementedError
+    answer = Reporter().render(state["question"], state.get("synthesis", ""))
+    return {**state, "answer": answer, "needs_human_review": False}
