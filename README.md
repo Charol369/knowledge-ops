@@ -1,7 +1,7 @@
-# KnowledgeOps · 企业级 RAG + Multi-Agent 知识库平台
+# KnowledgeOps · 生产导向研究型 Knowledge Agent 系统
 
-> 基于 LangGraph 的 Multi-Agent 架构，支持企业文档的智能问答、总结与报告生成。
-> 自研 MCP Server 暴露知识库为标准协议，Claude Desktop / Cursor / Cline 可直接调用。
+> 面向企业知识场景，把复杂问题转成 `plan → retrieve → synthesize → report → verify` 的研究型 Agent 流程。
+> 自研 MCP Server 暴露能力为标准协议，Claude Desktop / Cursor / Cline 可直接调用；通过模型路由与缓存做成本控制，而不是默认把所有请求打到最贵模型。
 
 [![Status](https://img.shields.io/badge/status-W1%20skeleton-blue.svg)](#-开发进度-sprint-看板)
 [![Python](https://img.shields.io/badge/python-3.11-3776AB.svg)](https://www.python.org/)
@@ -13,48 +13,69 @@
 ```mermaid
 graph TD
     User["👤 用户"]
-    Gateway["FastAPI Gateway<br/>SSE 流式 + Guardrails"]
+    Gateway["FastAPI Gateway<br/>SSE + Guardrails"]
 
-    subgraph Agents["🤖 LangGraph Multi-Agent"]
-        Supervisor["Supervisor"]
-        QA["QA Agent"]
-        Summary["Summary Agent"]
-        Report["Report Agent"]
+    subgraph Policy["🧠 Policy Layer"]
+        Complexity["Complexity Classifier"]
+        Router["Model Router"]
+        CachePolicy["Cache / Retry / Fallback"]
     end
 
-    subgraph Retrieval["🔍 Hybrid Retrieval"]
-        QueryTransform["HyDE / Multi-Query"]
+    subgraph Agents["🤖 Cognitive Agent Layer"]
+        Planner["Planner"]
+        Orchestrator["Retrieval Orchestrator"]
+        Synthesizer["Synthesizer"]
+        Reporter["Reporter"]
+        Verifier["Verifier / Reflection"]
+    end
+
+    subgraph Retrieval["🔍 Deterministic Retrieval Services"]
+        ContextBuilder["Context Builder"]
+        QueryTransform["Query Transform"]
         BM25["BM25 Sparse"]
-        Dense["Milvus Dense (bge-m3)"]
-        Rerank["bge-reranker-v2 精排"]
+        Dense["Dense Vector Search"]
+        RRF["RRF Fusion"]
+        Rerank["Cross-Encoder Rerank"]
+    end
+
+    subgraph Knowledge["💾 Knowledge Layer"]
+        ArtifactStore["Artifact Store<br/>plan / evidence / report"]
+        VectorStore[("Milvus / FAISS")]
     end
 
     subgraph Ingest["📥 Ingest Pipeline"]
         Loader["PDF/Word/HTML Loader"]
-        Splitter["分块"]
-        Embedder["bge-m3 Embedder"]
+        Splitter["Splitter"]
+        Embedder["Embedder"]
     end
 
-    Langfuse[("📊 Langfuse<br/>self-hosted")]
+    Langfuse[("📊 Langfuse / RAGAS / Metrics")]
     MCPServer["🔌 MCP Server"]
 
-    User --> Gateway --> Agents
-    Supervisor --> QA & Summary & Report
-    QA --> Retrieval
+    User --> Gateway --> Policy --> Planner
+    Planner --> Orchestrator --> ContextBuilder --> QueryTransform
     QueryTransform --> BM25 & Dense
-    BM25 --> Rerank
-    Dense --> Rerank
-    Loader --> Splitter --> Embedder --> Dense
-    Agents -.->|trace| Langfuse
+    BM25 --> RRF
+    Dense --> RRF
+    RRF --> Rerank --> Synthesizer --> Reporter --> Verifier
+    Planner --> ArtifactStore
+    Synthesizer --> ArtifactStore
+    Reporter --> ArtifactStore
+    Loader --> Splitter --> Embedder --> VectorStore
+    Dense -.-> VectorStore
+    Agents -.->|trace / eval| Langfuse
+    Policy -.->|cost / fallback| Langfuse
     MCPServer --> Retrieval
+    MCPServer --> ArtifactStore
 ```
 
 详见 [docs/architecture.md](docs/architecture.md)。
 
 ## ✨ 核心特性
 
-- 🔍 **混合检索**：BM25 稀疏 + Milvus 稠密 + bge-reranker-v2 精排 + HyDE 查询重写
-- 🤖 **Multi-Agent（Supervisor 模式）**：QA / Summary / Report 三 Agent，LangGraph 编排状态机
+- 🔍 **研究型 Pipeline**：Planner → Retrieval Orchestrator → Synthesizer → Reporter → Verifier
+- 🧱 **认知链路 Agent 化，执行链路服务化**：检索 / 重排 / 引用校验 / 评估保持 deterministic services
+- 💸 **成本治理**：复杂度判定 + 模型路由 + 缓存 / fallback，不默认把所有请求打到最高价模型
 - 🔌 **MCP Server**：自研协议接口，可被 Claude Desktop / Cursor / Cline 直接调用
 - 📊 **LLMOps 完整链路**：Langfuse 全链路追踪 + RAGAS 自动评估 + Guardrails 防护（结构化输出 + 注入检测 + 引用强制）
 - ⚡ **生产就绪**：FastAPI SSE 流式 + Docker Compose 一键起 + 100 QPS 压测验证
@@ -115,6 +136,7 @@ docker compose up -d  # 起 Milvus standalone + Langfuse + 应用
 ## 📚 文档
 
 - [架构设计](docs/architecture.md) - 模块说明 + 技术选型理由
+- [开发执行文档](docs/development.md) - 项目 1 完整实现的 `/goal` prompt + 拆分建议
 - [API 文档](docs/api.md) - REST + SSE + Pydantic schema
 - [评测报告](docs/benchmark.md) - RAGAS + Locust 压测结果
 - [架构决策记录 (ADR)](docs/decisions/)
@@ -122,37 +144,38 @@ docker compose up -d  # 起 Milvus standalone + Langfuse + 应用
 
 ## 🛠️ 技术栈
 
-`Python 3.11` · `uv` · `FastAPI` · `LangChain 1.x` · `LangGraph 1.x` · `Milvus / FAISS` · `bge-m3` · `bge-reranker-v2-m3` · `rank-bm25` · `RAGAS` · `Langfuse v4 (OpenTelemetry)` · `Pydantic v2` · `MCP` · `DeepSeek API` · `Docker Compose` · `pytest` · `Locust`
+`Python 3.11` · `uv` · `FastAPI` · `LangChain 1.x` · `LangGraph 1.x` · `Milvus / FAISS` · `bge-m3` · `bge-reranker-v2-m3` · `rank-bm25` · `RAGAS` · `Langfuse v4 (OpenTelemetry)` · `Pydantic v2` · `MCP` · `DeepSeek API` · `Docker Compose` · `pytest` · `Locust` · `Model Router` · `Artifact Store` · `Context Builder`
 
 ## 📅 开发进度（Sprint 看板）
 
 | Sprint | 周次 | 目标 | 状态 |
 |---|---|---|---|
 | **W1** | 5/18-5/24 | 知识速成 + 项目骨架 | ✅ **Done**（你正在看的版本） |
-| **Sprint 1** | W2 (5/25-5/31) | 数据 + 索引 + 基础 RAG（CLI 跑通 PDF 问答） | 🔜 |
-| **Sprint 2** | W3 (6/1-6/7) | 混合检索 + Rerank + RAGAS 基线 | 🔜 |
-| **Sprint 3** | W4 (6/8-6/14) | LangGraph Multi-Agent + MCP Server | 🔜 |
-| **Sprint 4** | W5 (6/15-6/21) | LLMOps 工程化（Langfuse 自托管 + Guardrails） | 🔜 |
-| **Sprint 5** | W6 (6/22-6/30) | 上线 + Demo + 简历视频 | 🔜 |
+| **Sprint 1** | W2 (5/25-5/31) | 最小研究闭环 + 证据管线 | 🔜 |
+| **Sprint 2** | W3 (6/1-6/7) | 混合检索 + 上下文工程 | 🔜 |
+| **Sprint 3** | W4 (6/8-6/14) | 混合范式 Agent 图 + MCP 工具层 | 🔜 |
+| **Sprint 4** | W5 (6/15-6/21) | Policy Layer + LLMOps | 🔜 |
+| **Sprint 5** | W6 (6/22-6/30) | 研究助手 Demo + 上线 + 简历视频 | 🔜 |
 
 ## 📂 目录结构
 
 ```
 knowledge-ops/
-├── docs/                  # 文档（架构图 / ADR / API / benchmark）
+├── docs/                  # 架构 / ADR / API / benchmark
 ├── src/
-│   ├── ingest/            # 数据接入（loaders / splitters / embedder）
-│   ├── retrieval/         # 检索层（dense / sparse / hybrid / rerank / query_transform）
-│   ├── agents/            # Multi-Agent 编排（graph / qa / summary / report / tools / memory）
-│   ├── guardrails/        # 防护层（injection / output_schema / citation）
-│   ├── api/               # FastAPI 路由 + Pydantic schemas
-│   ├── mcp/               # MCP Server
-│   └── observability/     # Langfuse + 业务指标
-├── eval/                  # RAGAS 测试集 + 评估脚本
-├── tests/                 # 单测 + 集成测试
-├── scripts/               # 批量入库 / 压测 / benchmark
-├── frontend/              # Streamlit（W6）
-├── notes/                 # W1 速成笔记（Day1-Day7）
+│   ├── policy.py         # 复杂度判定 / 模型路由 / fallback
+│   ├── ingest/           # 数据接入（loaders / splitters / embedder）
+│   ├── retrieval/        # 检索服务（context_builder / artifact_store / dense / sparse / hybrid / rerank / query_transform）
+│   ├── agents/           # 认知层（planner / orchestrator / synthesizer / reporter / verifier / graph / tools / memory）
+│   ├── guardrails/       # 防护层（injection / output_schema / citation）
+│   ├── api/              # FastAPI 路由 + Pydantic schemas
+│   ├── mcp/              # MCP Server
+│   └── observability/    # Langfuse + 业务指标
+├── eval/                 # RAGAS 测试集 + 评估脚本
+├── tests/                # 单测 + 集成测试
+├── scripts/              # 批量入库 / 压测 / benchmark
+├── frontend/             # Research UI（W6）
+├── notes/                # W1 速成笔记（Day1-Day7）
 ├── docker-compose.yml
 ├── Dockerfile
 └── pyproject.toml

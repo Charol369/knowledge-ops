@@ -1,11 +1,17 @@
-"""API 请求/响应 Pydantic 模型"""
+"""API 请求/响应 Pydantic 模型。"""
 from pydantic import BaseModel, Field
 
 
 class QueryRequest(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
-    intent: str | None = Field(default=None, description="可选：qa/summary/report，不传则 supervisor 自动判断")
-    thread_id: str | None = Field(default=None, description="可选：会话 ID 用于多轮记忆")
+    intent: str | None = Field(default=None, description="可选：lookup/research/report，不传则由 policy layer 判定")
+    thread_id: str | None = Field(default=None, description="可选：会话 ID，用于隔离 graph checkpointer 与 artifact session")
+
+
+class ResearchStep(BaseModel):
+    step_id: str
+    description: str
+    status: str = Field(default="pending", description="pending/running/completed/failed")
 
 
 class Citation(BaseModel):
@@ -17,5 +23,9 @@ class Citation(BaseModel):
 class QueryResponse(BaseModel):
     answer: str
     confidence: float
-    citations: list[Citation] = []
-    trace_id: str | None = None  # Langfuse trace id，便于前端展示"看追踪"按钮
+    plan: list[ResearchStep] = Field(default_factory=list)
+    citations: list[Citation] = Field(default_factory=list)
+    model_tier_used: str | None = None
+    artifact_session_id: str | None = None
+    trace_id: str | None = None
+    needs_human_review: bool = False

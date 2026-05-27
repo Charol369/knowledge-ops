@@ -1,7 +1,7 @@
-"""项目配置：用 pydantic-settings 从 .env 加载。
+"""项目配置中心。
 
-所有"全局可配"的参数（API key / 模型名 / 路径 / 超参）必须走这里，
-禁止在业务代码里散落 os.getenv("XXX") —— 否则 Sprint 4 加配置中心会撕裂。
+所有全局可调参数都集中在这里，避免在业务代码里散落 os.getenv。
+新的项目原则要求把模型路由、上下文工程和 artifact 持久化也纳入统一配置。
 """
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -9,28 +9,32 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    # ============== LLM ==============
     deepseek_api_key: str
     deepseek_base_url: str = "https://api.deepseek.com"
     deepseek_model: str = "deepseek-chat"
 
-    # ============== Embeddings ==============
+    cheap_model: str = "deepseek-chat"
+    primary_model: str = "deepseek-chat"
+    premium_model: str = "claude-4-7"
+    model_router_enabled: bool = True
+
     embed_model: str = "BAAI/bge-m3"
 
-    # ============== Vector DB ==============
     milvus_uri: str = "./data/milvus_demo.db"
     collection_name: str = "knowledge_ops"
 
-    # ============== Retrieval ==============
     top_k_dense: int = 10
     top_k_sparse: int = 10
-    top_k_final: int = 5  # rerank 后送给 LLM 的 chunk 数
+    top_k_final: int = 5
+    max_plan_steps: int = 5
+    max_reflection_rounds: int = 1
 
-    # ============== Generation ==============
+    artifact_root_dir: str = "./artifacts"
+    cache_ttl_seconds: int = 3600
+
     max_tokens: int = 2048
-    temperature: float = 0.3  # 低温度 = 减少幻觉
+    temperature: float = 0.3
 
-    # ============== Observability ==============
     langsmith_tracing: bool = False
     langsmith_api_key: str = ""
     langsmith_project: str = "knowledge-ops"

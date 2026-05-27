@@ -1,0 +1,14 @@
+workflow: full
+phase: design
+design_doc: docs/superpowers/specs/2026-05-27-sprint-1-minimal-research-loop-design.md
+plan: docs/superpowers/plans/2026-05-27-sprint-1-minimal-research-loop-plan.md
+base_ref: cd56114
+build_mode: null
+isolation: null
+verify_mode: light
+verify_result: pending
+verification_report: null
+branch_status: pending
+created_at: 2026-05-27
+verified_at: null
+archived: false

@@ -1,13 +1,14 @@
-"""自定义业务指标（Sprint 4 任务）
+"""自定义业务指标。
 
-Langfuse 追踪 LLM 调用的延迟/token/cost，但**业务级指标**需要自己埋：
-  - 用户提问的意图分布（qa/summary/report）
-  - 检索召回率（每个 query 实际用了多少 chunks）
-  - 引用准确率（citation 是否真的指向 context chunk）
-  - 用户反馈率（点赞 / 点踩 / 人工审核标记）
-
-Sprint 4 用 Prometheus / OpenTelemetry metrics 上报。
+Langfuse 负责模型追踪；这里负责项目级业务指标：
+- complexity 分布
+- model tier 使用占比
+- tool call success rate
+- fallback rate
+- citation verification hit rate
+- user feedback / human review rate
 """
 
 # TODO Sprint 4: from opentelemetry import metrics
 # TODO Sprint 4: 定义 Counter / Histogram / Gauge
+# TODO Sprint 4: 统一埋点接口，避免业务代码直接依赖具体监控 SDK

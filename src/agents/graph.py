@@ -1,38 +1,68 @@
-"""LangGraph 主图：编排 QA / Summary / Report 三 Agent（Supervisor 模式）
+"""LangGraph 主图：生产导向研究型 Knowledge Agent 骨架。
 
-架构（详见 docs/architecture.md）：
+这份骨架明确贯彻新的项目原则：
+1. 认知链路 Agent 化：planner / retrieval_orchestrator / synthesizer / reporter / verifier
+2. 执行链路服务化：ingest / retrieval / rerank / citation / eval 不塞进 Agent 自由推理
+3. 成本策略前置：state 中显式追踪 complexity / model_tier / requires_reflection
 
-  START → supervisor → (intent=qa)      → qa_agent      → END
-                    → (intent=summary)  → summary_agent → END
-                    → (intent=report)   → report_agent  → END
-
-Sprint 3 任务。Day5 03_supervisor.py 已经做过简化版（math/story），这里是扩展版。
+当前阶段先把图结构和状态模式固定下来，具体业务逻辑按 Sprint 1-4 逐步填充。
 """
-from typing import TypedDict, Literal
+from typing import Literal, TypedDict
+
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, START, StateGraph
+
+from src.agents.orchestrator import retrieval_orchestrator_node
+from src.agents.planner import planner_node
+from src.agents.reporter import reporter_node
+from src.agents.synthesizer import synthesizer_node
+from src.agents.verifier import verifier_node
 
 
 class AgentState(TypedDict):
-    """图的共享内存"""
-    question: str            # 用户原始问题
-    intent: str              # supervisor 决定的路由（qa / summary / report）
-    context: list[str]       # 检索到的 chunks
-    answer: str              # 最终答案
-    citations: list[dict]    # 引用来源 [{source, page, snippet}]
+    question: str
+    intent: str | None
+    complexity: str | None
+    model_tier: str | None
+    plan: list[str]
+    context: list[str]
+    evidence: list[dict]
+    synthesis: str
+    answer: str
+    citations: list[dict]
+    artifact_session_id: str | None
+    trace_id: str | None
+    requires_reflection: bool
+    needs_human_review: bool
+
+
+def route_after_reporter(state: AgentState) -> Literal["verifier", "finish"]:
+    if state["requires_reflection"]:
+        return "verifier"
+    return "finish"
 
 
 def build_graph():
-    """构建并编译 LangGraph"""
-    # TODO Sprint 3:
-    #   from langgraph.graph import StateGraph, START, END
-    #   graph = StateGraph(AgentState)
-    #   graph.add_node("supervisor", supervisor)
-    #   graph.add_node("qa_agent", qa_agent)
-    #   ...
-    #   graph.add_conditional_edges("supervisor", route)
-    #   return graph.compile(checkpointer=MemorySaver())  # 加 checkpointer 支持 HITL
-    raise NotImplementedError
+    graph = StateGraph(AgentState)
 
+    graph.add_node("planner", planner_node)
+    graph.add_node("retrieval_orchestrator", retrieval_orchestrator_node)
+    graph.add_node("synthesizer", synthesizer_node)
+    graph.add_node("reporter", reporter_node)
+    graph.add_node("verifier", verifier_node)
 
-def route(state: AgentState) -> Literal["qa_agent", "summary_agent", "report_agent"]:
-    """根据 supervisor 决定的 intent 选下一个节点"""
-    return f"{state['intent']}_agent"  # type: ignore
+    graph.add_edge(START, "planner")
+    graph.add_edge("planner", "retrieval_orchestrator")
+    graph.add_edge("retrieval_orchestrator", "synthesizer")
+    graph.add_edge("synthesizer", "reporter")
+    graph.add_conditional_edges(
+        "reporter",
+        route_after_reporter,
+        {
+            "verifier": "verifier",
+            "finish": END,
+        },
+    )
+    graph.add_edge("verifier", END)
+
+    return graph.compile(checkpointer=MemorySaver())
