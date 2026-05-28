@@ -10,12 +10,14 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 def split_recursive(
     docs: list[Document],
     chunk_size: int = 500,
-    chunk_overlap: int = 50,
+    overlap: int = 50,
+    chunk_overlap: int | None = None,
 ) -> list[Document]:
     """递归字符分块（baseline）"""
+    effective_overlap = overlap if chunk_overlap is None else chunk_overlap
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
-        chunk_overlap=chunk_overlap,
+        chunk_overlap=effective_overlap,
     )
     return splitter.split_documents(docs)
 

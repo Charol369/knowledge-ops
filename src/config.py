@@ -39,9 +39,18 @@ class Settings(BaseSettings):
     langsmith_api_key: str = ""
     langsmith_project: str = "knowledge-ops"
 
+    langfuse_enabled: bool = False
     langfuse_public_key: str = ""
     langfuse_secret_key: str = ""
     langfuse_host: str = "https://cloud.langfuse.com"
+
+    postgres_saver_dsn: str = ""
+
+    api_auth_enabled: bool = False
+    api_key: str = ""
+    rate_limit_enabled: bool = False
+    rate_limit_requests: int = 60
+    rate_limit_window_seconds: int = 60
 
 
 settings = Settings()

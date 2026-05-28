@@ -31,6 +31,7 @@ def test_query_endpoint_invokes_sprint3_graph(tmp_path: Path):
     assert body["confidence"] > 0
     assert len(body["plan"]) >= 2
     assert body["citations"][0]["source"].endswith("sample.html")
+    assert body["model_tier_used"] == "tier2"
     assert body["artifact_session_id"]
     assert body["trace_id"] == "api-thread"
     assert body["needs_human_review"] is False

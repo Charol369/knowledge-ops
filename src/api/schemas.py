@@ -45,6 +45,10 @@ class IngestRequest(BaseModel):
     glob: str = Field(default="**/*", min_length=1)
     build_index: bool = Field(default=False, description="Build a local FAISS index after loading.")
     index_dir: str | None = Field(default=None, description="Optional local FAISS index directory.")
+    embedding_backend: Literal["hash", "local", "fake", "huggingface"] = Field(
+        default="hash",
+        description="Embedding backend for local ingest; hash is the offline Sprint 1 default.",
+    )
 
 
 class IngestResponse(BaseModel):

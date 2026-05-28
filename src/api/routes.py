@@ -113,7 +113,11 @@ async def ingest(req: IngestRequest):
             from src.retrieval.dense import build_index
 
             target_index_dir = index_dir or "./data/faiss/api_ingest"
-            build_index(chunks, get_embedder(), index_dir=target_index_dir)
+            build_index(
+                chunks,
+                get_embedder(backend=req.embedding_backend),
+                index_dir=target_index_dir,
+            )
             index_dir = target_index_dir
         except Exception as exc:
             return IngestResponse(

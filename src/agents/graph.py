@@ -11,15 +11,16 @@ from pathlib import Path
 from typing import Any, Literal, TypedDict
 from uuid import uuid4
 
-from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 
+from src.agents.memory import get_checkpointer
 from src.agents.orchestrator import retrieval_orchestrator_node
 from src.agents.planner import planner_node
 from src.agents.reporter import reporter_node
 from src.agents.synthesizer import synthesizer_node
 from src.agents.verifier import verifier_node
 from src.config import settings
+from src.observability.langfuse_setup import get_langfuse_handler
 from src.retrieval.artifact_store import ArtifactStore
 
 
@@ -77,7 +78,15 @@ def build_graph():
     )
     graph.add_edge("verifier", END)
 
-    return graph.compile(checkpointer=MemorySaver())
+    return graph.compile(checkpointer=get_checkpointer())
+
+
+def _graph_invoke_config(trace_id: str) -> dict[str, Any]:
+    config: dict[str, Any] = {"configurable": {"thread_id": trace_id}}
+    handler = get_langfuse_handler()
+    if handler is not None:
+        config["callbacks"] = [handler]
+    return config
 
 
 def run_research_graph(
@@ -121,7 +130,7 @@ def run_research_graph(
     }
     result = build_graph().invoke(
         initial_state,
-        config={"configurable": {"thread_id": trace_id}},
+        config=_graph_invoke_config(trace_id),
     )
     store.save_plan(session_id, result.get("plan", []))
     store.save_evidence(session_id, result.get("evidence", []))

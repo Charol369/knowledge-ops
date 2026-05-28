@@ -5,6 +5,7 @@ from pydantic import ValidationError
 
 from src.guardrails.citation import verify_citations
 from src.guardrails.output_schema import Answer
+from src.observability.metrics import business_metrics
 
 
 class Verifier:
@@ -54,6 +55,11 @@ def verifier_node(state: dict[str, Any]) -> dict[str, Any]:
         answer=state.get("answer", ""),
         citations=state.get("citations", []),
         evidence=state.get("context", {}).get("evidence", state.get("evidence", [])),
+    )
+    business_metrics.record_citation_verification(
+        verified=verification.get("status") == "ok",
+        needs_human_review=bool(verification.get("needs_human_review", True)),
+        trace_id=state.get("trace_id"),
     )
     execution_path = [*state.get("execution_path", []), "verifier"]
     return {

@@ -7,6 +7,9 @@
 """
 from typing import Any
 
+from src.observability.metrics import business_metrics
+from src.policy import decide_policy
+
 
 class ResearchPlanner:
     def needs_research(self, question: str) -> bool:
@@ -33,11 +36,19 @@ def planner_node(state: dict[str, Any]) -> dict[str, Any]:
     planner = ResearchPlanner()
     question = state["question"]
     plan = planner.plan(question)
+    policy_decision = decide_policy(question)
+    business_metrics.record_policy_decision(
+        complexity=policy_decision.complexity,
+        model_tier=policy_decision.model_tier,
+        cache_hit=policy_decision.cache_hit,
+        trace_id=state.get("trace_id"),
+    )
     execution_path = [*state.get("execution_path", []), "planner"]
     return {
         **state,
         "plan": plan,
         "requires_research": planner.needs_research(question),
-        "complexity": "standard" if planner.needs_research(question) else "simple",
+        "complexity": policy_decision.complexity,
+        "model_tier": policy_decision.model_tier,
         "execution_path": execution_path,
     }

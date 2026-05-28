@@ -4,7 +4,7 @@
 
 ## Sprint 1 本地基线
 
-测试日期：2026-05-27
+测试日期：2026-05-28
 
 测试环境：Windows 本地开发环境，Python 3.11.15，`uv run`，本地样本目录 `data`。
 
@@ -12,8 +12,8 @@
 
 | 命令 | 结果 | 本地输出来源 |
 |---|---:|---|
-| `uv run python scripts/ingest_pdfs.py data` | `2.1549639999866486s` | 输出 `status=ok`，`documents_loaded=15`，`chunks_created=93`，`index_dir=data\\faiss\\sprint1` |
-| `uv run python scripts/run_research_loop.py --question "Summarize the indexed evidence"` | `0.245924900053069s` | 输出 `status=ok`，生成 3-step plan、5 条 evidence、`session_id=20260527T155014Z-922de924` |
+| `uv run python scripts/ingest_pdfs.py data` | `2.846477000042796s` | 输出 `status=ok`，`documents_loaded=15`，`chunks_created=93`，`index_dir=data\\faiss\\sprint1` |
+| `uv run python scripts/run_research_loop.py --question "Summarize the indexed evidence"` | `0.11293730000033975s` | 输出 `status=ok`，生成 3-step plan、5 条 evidence、`session_id=20260528T014412Z-8ad8de02` |
 
 未测项：Recall@5、RAGAS Faithfulness、Answer Relevancy、P95 延迟、单 query 成本、最大并发均未在 Sprint 1 运行，保持待测。
 
@@ -49,6 +49,30 @@
 | `uv run python -m src.mcp.server --help` | blocked | 当前模块入口会启动 `mcp.run(transport="stdio")`，不是 bounded help/CLI mode，按 Sprint 3 goal 不作为无界 smoke 启动 |
 
 未测项：Claude Desktop GUI 端到端接入、真实 MCP client 手动配置、真实 bge-m3 检索质量、Recall@5、RAGAS Faithfulness、P95 延迟、成本和 QPS 均未在 Sprint 3 smoke 中计算，保持待测或人工边界。
+
+## Sprint 4 Policy / LLMOps / Guardrails Smoke
+
+测试日期：2026-05-28
+
+测试环境：Windows 本地开发环境，Python 3.11.15，`uv run`，本地 fixture / tmp 目录。
+
+Sprint 4 smoke 只验证本地可测试的 policy、guardrails、observability dry-run、MemorySaver/PostgresSaver 可选边界、API key auth 和内存 rate limit。未连接真实 Langfuse、Postgres、Redis、外部付费模型或云服务。
+
+| 命令 | 结果 | 本地输出来源 |
+|---|---:|---|
+| `uv run pytest tests/unit/test_policy.py` | `5 passed` | Complexity Classifier、Model Router、LocalResponseCache、FallbackPolicy 本地测试通过 |
+| `uv run pytest tests/unit/test_guardrails.py` | `6 passed` | Unicode normalization、two-level injection detection、model judge blocked reason、guardrail metrics hook 测试通过 |
+| `uv run pytest tests/unit/test_observability.py` | `10 passed` | BusinessMetricsRecorder、Langfuse dry-run disable、SDK env 映射、graph callback hook、policy/citation metrics hook 测试通过 |
+| `uv run pytest tests/unit/test_memory.py` | `4 passed` | 默认 MemorySaver、PostgresSaver configured fallback、injected Postgres factory boundary 测试通过 |
+| `uv run pytest tests/integration/test_auth_rate_limit.py` | `5 passed` | `/api/v1/query` API key auth、in-memory rate limit、`/health` 不保护测试通过 |
+| `uv run pytest tests/unit/test_agents.py tests/integration/test_query_api.py tests/integration/test_mcp_server.py` | `6 passed, 3 warnings` | Sprint 3 graph/API/MCP 回归通过；warnings 来自 FAISS/SWIG 第三方类型 |
+| `uv run pytest tests/unit/test_retrieval.py tests/unit/test_context_builder.py` | `11 passed, 3 warnings` | Sprint 2 retrieval/context 回归通过；warnings 来自 FAISS/SWIG 第三方类型 |
+| `uv run python -c "from src.main import app; print(app.title)"` | `KnowledgeOps` | FastAPI app import-level smoke |
+| `uv run python -c "from src.policy import ComplexityClassifier, ModelRouter, FallbackPolicy; print('policy-import-ok')"` | `policy-import-ok` | Policy import/local smoke |
+| `uv run python -c "from src.guardrails.injection import detect_injection; print(detect_injection('hello')[0])"` | `False` | Guardrails import/local smoke |
+| `uv run python -c "from src.observability.langfuse_setup import get_langfuse_handler; handler = get_langfuse_handler(); print('langfuse-disabled' if handler is None else 'langfuse-configured')"` | `langfuse-disabled` | Langfuse dry-run smoke；本地默认不构造真实 handler、不要求 Langfuse server |
+
+未测项：真实 Langfuse server trace、真实 PostgresSaver 连接、Redis-backed rate limit、真实 bge-m3 检索质量、Recall@5、RAGAS Faithfulness、P95 延迟、成本和 QPS 均未在 Sprint 4 smoke 中计算，保持待测或显式可选集成边界。
 
 ## 测试环境（计划）
 

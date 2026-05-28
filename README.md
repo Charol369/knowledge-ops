@@ -101,7 +101,7 @@ git clone https://github.com/Charol369/knowledge-ops
 cd knowledge-ops
 cp .env.example .env  # 填 DEEPSEEK_API_KEY
 uv sync               # 装依赖
-uv run python scripts/ingest_pdfs.py data/pdfs/    # 批量入库
+uv run python scripts/ingest_pdfs.py data          # 使用现有本地样本批量入库
 uv run uvicorn src.main:app --reload               # 启动 API
 ```
 

@@ -86,6 +86,44 @@ def test_ingest_endpoint_validates_request_and_no_longer_returns_501(tmp_path: P
     assert body["chunks_created"] >= 1
 
 
+def test_ingest_endpoint_build_index_uses_local_hash_embedding_backend_by_default(
+    tmp_path: Path,
+    monkeypatch,
+):
+    html_path = tmp_path / "sample.html"
+    html_path.write_text("<body><p>Indexed API ingest evidence.</p></body>", encoding="utf-8")
+    calls = {}
+
+    def fake_get_embedder(model_name=None, backend="huggingface"):
+        calls["backend"] = backend
+        return object()
+
+    def fake_build_index(docs, embedder, index_dir=None):
+        calls["docs"] = docs
+        calls["index_dir"] = index_dir
+        return object()
+
+    monkeypatch.setattr("src.ingest.embedder.get_embedder", fake_get_embedder)
+    monkeypatch.setattr("src.retrieval.dense.build_index", fake_build_index)
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/v1/ingest",
+        json={
+            "path": str(tmp_path),
+            "build_index": True,
+            "index_dir": str(tmp_path / "index"),
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "ok"
+    assert calls["backend"] == "hash"
+    assert calls["index_dir"] == str(tmp_path / "index")
+    assert len(calls["docs"]) >= 1
+
+
 def test_bm25_sparse_retriever_prioritizes_exact_terms_and_preserves_source():
     docs = [
         Document(page_content="Transformer attention uses multi head self attention.", metadata={"source": "paper.md", "page": 1}),
