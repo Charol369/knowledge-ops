@@ -91,12 +91,24 @@ Sprint 4 smoke 只验证本地可测试的 policy、guardrails、observability d
 
 Sprint 5 未测项：
 
-- Recall@5：脚本输出 `pending_labeled_eval`，缺少已标注 QA 集与真实评估命令。
+- 大规模 / 生产 Recall@5：当前只完成 20 条本地 source/page 标注集评估，尚未覆盖多文档生产语料。
 - RAGAS：脚本输出 `pending_real_run`，未运行真实 RAGAS 指标。
 - QPS / P95：脚本输出 `pending_load_test`，未运行 Locust 100 QPS x 5min。
 - 单 query 成本：本地 hash embedding / deterministic fallback smoke 不产生真实 LLM 计费数据。
 - Docker Compose 全量联调：未在本次本地 Sprint 5 验证中启动，保持手动/环境相关边界。
 - Cloud deployment、demo video、resume finalization、job applications：非代码自动化交付，不能声明为已自动完成。
+
+## Sprint 5 小规模 Retrieval Hit@5 / Recall@5
+
+测试日期：2026-05-28
+
+测试环境：Windows 本地开发环境，Python 3.11.15，`uv run`，本地样本目录 `data`，标注集 `eval/retrieval_qa.jsonl`，20 条 question -> expected source/page，embedding backend `hash`。
+
+| 命令 | 结果 | 本地输出来源 |
+|---|---:|---|
+| `uv run python scripts/evaluate_retrieval.py --dataset eval/retrieval_qa.jsonl --docs-dir data --retrieval dense,hybrid --top-k 5 --embedding-backend hash` | dense Hit@5 / question Recall@5 `0.75` (`15/20`)，MRR@5 `0.5574999999999999`；hybrid Hit@5 / question Recall@5 `1.0` (`20/20`)，MRR@5 `0.7791666666666667` | 输出 `status=ok`，`dataset_examples=20`，`documents=93`，dense latency `0.06234089999998105s`，hybrid latency `0.010229800000161049s` |
+
+边界：这是 source/page 命中率，不是答案质量评估；只覆盖 `attention_is_all_you_need.pdf` 的 20 条本地标注问题；`hash` embedding 用于本地确定性评估，不代表 `bge-m3` 真实语义检索质量。
 
 ## 测试环境（计划）
 
@@ -109,7 +121,7 @@ Sprint 5 未测项：
 
 | 指标 | Baseline (Sprint 2 末) | 最终 (Sprint 5 末) | 目标 |
 |---|---|---|---|
-| 检索 Recall@5 | _待测_ | `pending_labeled_eval` | ≥ 85% |
+| 检索 Recall@5 | _待测_ | local 20-case source/page Hit@5：dense `0.75`，hybrid `1.0`；大规模标注集待测 | ≥ 85% |
 | Faithfulness | _待测_ | `pending_real_run` | ≥ 95% |
 | Answer Relevancy | _待测_ | `pending_real_run` | ≥ 90% |
 | 端到端 P95 延迟 | _待测_ | `pending_load_test` | < 3s |
