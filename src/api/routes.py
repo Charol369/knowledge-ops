@@ -4,13 +4,18 @@
 即使当前仍是骨架，也要把最终的数据流设计清楚：
 question -> policy -> graph -> artifacts -> response / stream
 """
+import json
 from pathlib import Path
+from uuid import uuid4
 
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 
 from src.agents.graph import run_research_graph
 from src.api.schemas import (
     Citation,
+    FeedbackRequest,
+    FeedbackResponse,
     IngestRequest,
     IngestResponse,
     QueryRequest,
@@ -19,21 +24,25 @@ from src.api.schemas import (
 )
 from src.ingest.loaders import load_directory, load_docx, load_html, load_pdf
 from src.ingest.splitters import split_recursive
+from src.observability.langfuse_setup import record_langfuse_score
+from src.observability.metrics import business_metrics
 
 router = APIRouter()
 
 
-@router.post("/query", response_model=QueryResponse)
-async def query(req: QueryRequest):
-    """主入口：用户问题 -> policy layer -> agent graph -> 结构化研究结果。"""
+def _run_query(req: QueryRequest, trace_id: str | None = None) -> QueryResponse:
     result = run_research_graph(
         question=req.question,
-        thread_id=req.thread_id,
+        thread_id=trace_id or req.thread_id,
         docs_dir=req.docs_dir,
         index_dir=req.index_dir,
         artifact_root=req.artifact_root,
         embedding_backend=req.embedding_backend,
     )
+    return _query_result_to_response(result)
+
+
+def _query_result_to_response(result: dict) -> QueryResponse:
     verification = result.get("verification", {})
     plan = [
         ResearchStep(
@@ -60,6 +69,72 @@ async def query(req: QueryRequest):
         artifact_session_id=result.get("artifact_session_id"),
         trace_id=result.get("trace_id"),
         needs_human_review=bool(result.get("needs_human_review", False)),
+    )
+
+
+def _sse_event(event: str, data: dict) -> str:
+    payload = json.dumps(data, ensure_ascii=False)
+    return f"event: {event}\ndata: {payload}\n\n"
+
+
+@router.post("/query", response_model=QueryResponse)
+async def query(req: QueryRequest):
+    """主入口：用户问题 -> policy layer -> agent graph -> 结构化研究结果。"""
+    return _run_query(req)
+
+
+@router.post("/query/stream")
+async def query_stream(req: QueryRequest):
+    """SSE wrapper around the existing graph-backed query contract."""
+    trace_id = req.thread_id or uuid4().hex
+
+    def event_stream():
+        yield _sse_event(
+            "progress",
+            {
+                "stage": "started",
+                "trace_id": trace_id,
+                "message": "Query accepted.",
+            },
+        )
+        response = _run_query(req, trace_id=trace_id)
+        yield _sse_event(
+            "progress",
+            {
+                "stage": "graph_completed",
+                "trace_id": response.trace_id,
+                "plan": [step.model_dump(mode="json") for step in response.plan],
+                "citations_count": len(response.citations),
+                "artifact_session_id": response.artifact_session_id,
+            },
+        )
+        yield _sse_event("completion", response.model_dump(mode="json"))
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@router.post("/feedback", response_model=FeedbackResponse)
+async def feedback(req: FeedbackRequest):
+    """Capture user feedback locally and optionally mirror it to Langfuse."""
+    business_metrics.record_feedback(
+        trace_id=req.trace_id,
+        score=req.score,
+        comment=req.comment,
+        source=req.source,
+    )
+    langfuse_result = record_langfuse_score(
+        trace_id=req.trace_id,
+        score=req.score,
+        name=req.name,
+        comment=req.comment,
+    )
+    return FeedbackResponse(
+        status="ok",
+        trace_id=req.trace_id,
+        score=float(req.score),
+        storage="local-memory",
+        langfuse_status=str(langfuse_result["status"]),
+        blocked_reason=langfuse_result["blocked_reason"],
     )
 
 

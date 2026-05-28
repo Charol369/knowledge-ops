@@ -29,6 +29,7 @@ class BusinessMetricsRecorder:
         self._citation_verifications_total = 0
         self._citation_verified_total = 0
         self._human_review_total = 0
+        self._feedback_total = 0
         self._trace_ids: list[str] = []
         self._events: list[dict[str, Any]] = []
 
@@ -127,6 +128,26 @@ class BusinessMetricsRecorder:
             }
         )
 
+    def record_feedback(
+        self,
+        *,
+        trace_id: str,
+        score: float,
+        comment: str | None = None,
+        source: str | None = None,
+    ) -> None:
+        self._feedback_total += 1
+        self._remember_trace_id(trace_id)
+        self._events.append(
+            {
+                "type": "feedback",
+                "trace_id": trace_id,
+                "score": float(score),
+                "comment": comment,
+                "source": source,
+            }
+        )
+
     def snapshot(self) -> dict[str, Any]:
         return {
             "policy_decisions_total": self._policy_decisions_total,
@@ -143,6 +164,7 @@ class BusinessMetricsRecorder:
             "citation_verifications_total": self._citation_verifications_total,
             "citation_verified_total": self._citation_verified_total,
             "human_review_total": self._human_review_total,
+            "feedback_total": self._feedback_total,
             "trace_ids": list(self._trace_ids),
             "events": deepcopy(self._events),
         }

@@ -1,4 +1,4 @@
-from src.observability.langfuse_setup import get_langfuse_handler
+from src.observability.langfuse_setup import get_langfuse_handler, record_langfuse_score
 from src.observability.metrics import BusinessMetricsRecorder, business_metrics
 from src.agents import graph as graph_module
 from src.agents.planner import planner_node
@@ -172,6 +172,53 @@ def test_langfuse_handler_maps_settings_to_sdk_environment(monkeypatch):
         "secret_key": "secret-from-settings",
         "host": "http://localhost:3000",
     }
+
+
+def test_record_langfuse_score_uses_configured_v4_create_score(monkeypatch):
+    calls = []
+
+    class FakeLangfuseClient:
+        def create_score(self, **kwargs):
+            calls.append(("create_score", kwargs))
+
+        def flush(self):
+            calls.append(("flush", {}))
+
+    monkeypatch.setattr("src.observability.langfuse_setup.settings.langfuse_enabled", True)
+    monkeypatch.setattr(
+        "src.observability.langfuse_setup.settings.langfuse_public_key",
+        "public",
+    )
+    monkeypatch.setattr(
+        "src.observability.langfuse_setup.settings.langfuse_secret_key",
+        "secret",
+    )
+    monkeypatch.setattr(
+        "src.observability.langfuse_setup.settings.langfuse_host",
+        "http://localhost:3000",
+    )
+
+    result = record_langfuse_score(
+        trace_id="trace-feedback",
+        score=1,
+        name="user_feedback",
+        comment="Useful",
+        client_factory=FakeLangfuseClient,
+    )
+
+    assert result == {"status": "recorded", "blocked_reason": None}
+    assert calls == [
+        (
+            "create_score",
+            {
+                "trace_id": "trace-feedback",
+                "name": "user_feedback",
+                "value": 1.0,
+                "comment": "Useful",
+            },
+        ),
+        ("flush", {}),
+    ]
 
 
 def test_planner_records_policy_decision_with_trace_id():

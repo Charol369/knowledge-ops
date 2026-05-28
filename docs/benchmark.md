@@ -1,6 +1,6 @@
 # 性能基准报告
 
-> Sprint 1-3 只记录本地 smoke baseline。未运行的评测指标保持待测，不编造结果。
+> Sprint 1-5 只记录已执行命令产生的本地结果。未运行的评测指标保持待测，不编造结果。
 
 ## Sprint 1 本地基线
 
@@ -62,7 +62,7 @@ Sprint 4 smoke 只验证本地可测试的 policy、guardrails、observability d
 |---|---:|---|
 | `uv run pytest tests/unit/test_policy.py` | `5 passed` | Complexity Classifier、Model Router、LocalResponseCache、FallbackPolicy 本地测试通过 |
 | `uv run pytest tests/unit/test_guardrails.py` | `6 passed` | Unicode normalization、two-level injection detection、model judge blocked reason、guardrail metrics hook 测试通过 |
-| `uv run pytest tests/unit/test_observability.py` | `10 passed` | BusinessMetricsRecorder、Langfuse dry-run disable、SDK env 映射、graph callback hook、policy/citation metrics hook 测试通过 |
+| `uv run pytest tests/unit/test_observability.py` | `11 passed` | BusinessMetricsRecorder、Langfuse dry-run disable、SDK env 映射、graph callback hook、policy/citation metrics hook、Langfuse v4 feedback score helper 测试通过 |
 | `uv run pytest tests/unit/test_memory.py` | `4 passed` | 默认 MemorySaver、PostgresSaver configured fallback、injected Postgres factory boundary 测试通过 |
 | `uv run pytest tests/integration/test_auth_rate_limit.py` | `5 passed` | `/api/v1/query` API key auth、in-memory rate limit、`/health` 不保护测试通过 |
 | `uv run pytest tests/unit/test_agents.py tests/integration/test_query_api.py tests/integration/test_mcp_server.py` | `6 passed, 3 warnings` | Sprint 3 graph/API/MCP 回归通过；warnings 来自 FAISS/SWIG 第三方类型 |
@@ -73,6 +73,30 @@ Sprint 4 smoke 只验证本地可测试的 policy、guardrails、observability d
 | `uv run python -c "from src.observability.langfuse_setup import get_langfuse_handler; handler = get_langfuse_handler(); print('langfuse-disabled' if handler is None else 'langfuse-configured')"` | `langfuse-disabled` | Langfuse dry-run smoke；本地默认不构造真实 handler、不要求 Langfuse server |
 
 未测项：真实 Langfuse server trace、真实 PostgresSaver 连接、Redis-backed rate limit、真实 bge-m3 检索质量、Recall@5、RAGAS Faithfulness、P95 延迟、成本和 QPS 均未在 Sprint 4 smoke 中计算，保持待测或显式可选集成边界。
+
+## Sprint 5 Streaming / Feedback / Demo / Benchmark Smoke
+
+测试日期：2026-05-28
+
+测试环境：Windows 本地开发环境，Python 3.11.15，`uv run`，本地样本目录 `data`。未启动 Docker、真实 Langfuse server、云服务或长运行 Streamlit server。
+
+| 命令 | 结果 | 本地输出来源 |
+|---|---:|---|
+| `uv run pytest tests/integration/test_streaming.py` | `2 passed, 3 warnings` | `/api/v1/query/stream` 返回有序 SSE `progress/progress/completion`，并继承 Sprint 4 API key 保护；warnings 来自 FAISS/SWIG 第三方类型 |
+| `uv run pytest tests/integration/test_feedback.py` | `2 passed` | `/api/v1/feedback` 本地捕获 score/comment/source；默认 Langfuse disabled 时返回明确配置状态 |
+| `uv run pytest tests/integration/test_frontend_demo.py` | `2 passed` | Streamlit demo 的 SSE parser 与 API key header helper 可导入测试 |
+| `uv run python -m py_compile frontend/app.py` | passed | Demo UI 文件语法检查通过 |
+| `uv run python -c "import streamlit; print(streamlit.__version__)"` | `1.57.0` | Sprint 5 唯一新增直接依赖可导入 |
+| `uv run python scripts/benchmark.py --retrieval dense,hybrid --top-k 5` | dense `0.06787819997407496s`; hybrid `0.007698599947616458s` | 输出 `status=ok`，`documents=93`，dense returned `5`，hybrid returned `5`，sources 均来自 `data\\attention_is_all_you_need.pdf` |
+
+Sprint 5 未测项：
+
+- Recall@5：脚本输出 `pending_labeled_eval`，缺少已标注 QA 集与真实评估命令。
+- RAGAS：脚本输出 `pending_real_run`，未运行真实 RAGAS 指标。
+- QPS / P95：脚本输出 `pending_load_test`，未运行 Locust 100 QPS x 5min。
+- 单 query 成本：本地 hash embedding / deterministic fallback smoke 不产生真实 LLM 计费数据。
+- Docker Compose 全量联调：未在本次本地 Sprint 5 验证中启动，保持手动/环境相关边界。
+- Cloud deployment、demo video、resume finalization、job applications：非代码自动化交付，不能声明为已自动完成。
 
 ## 测试环境（计划）
 
@@ -85,12 +109,12 @@ Sprint 4 smoke 只验证本地可测试的 policy、guardrails、observability d
 
 | 指标 | Baseline (Sprint 2 末) | 最终 (Sprint 5 末) | 目标 |
 |---|---|---|---|
-| 检索 Recall@5 | _待测_ | _待测_ | ≥ 85% |
-| Faithfulness | _待测_ | _待测_ | ≥ 95% |
-| Answer Relevancy | _待测_ | _待测_ | ≥ 90% |
-| 端到端 P95 延迟 | _待测_ | _待测_ | < 3s |
-| 单 query 成本 | _待测_ | _待测_ | < ¥0.05 |
-| 最大并发 | _待测_ | _待测_ | ≥ 100 QPS |
+| 检索 Recall@5 | _待测_ | `pending_labeled_eval` | ≥ 85% |
+| Faithfulness | _待测_ | `pending_real_run` | ≥ 95% |
+| Answer Relevancy | _待测_ | `pending_real_run` | ≥ 90% |
+| 端到端 P95 延迟 | _待测_ | `pending_load_test` | < 3s |
+| 单 query 成本 | _待测_ | _待测，本地 smoke 无真实 LLM 计费_ | < ¥0.05 |
+| 最大并发 | _待测_ | `pending_load_test` | ≥ 100 QPS |
 
 ## 对比实验（Sprint 2-3）
 

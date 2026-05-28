@@ -59,7 +59,7 @@ app.state.rate_limiter = InMemoryRateLimiter(
 
 
 def _is_protected_path(path: str) -> bool:
-    return path == "/api/v1/query"
+    return path in {"/api/v1/query", "/api/v1/query/stream", "/api/v1/feedback"}
 
 
 @app.middleware("http")
@@ -84,7 +84,7 @@ async def sprint4_protection_middleware(request: Request, call_next):
                 window_seconds=settings.rate_limit_window_seconds,
             )
             request.app.state.rate_limiter = limiter
-        identity = api_key or request.client.host if request.client else "anonymous"
+        identity = api_key or (request.client.host if request.client else "anonymous")
         if not limiter.allow(identity):
             return JSONResponse(
                 status_code=429,

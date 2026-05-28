@@ -6,6 +6,7 @@ Sprint 3 任务。
 输出：结构化摘要（标题 + 3-5 个要点 + 矛盾点标注）
 """
 from src.agents.graph import AgentState
+from src.agents.synthesizer import Synthesizer
 
 
 SUMMARY_SYSTEM_PROMPT = """你是会议纪要 / 资料整理专家。
@@ -18,6 +19,8 @@ SUMMARY_SYSTEM_PROMPT = """你是会议纪要 / 资料整理专家。
 
 
 def summary_agent(state: AgentState) -> dict:
-    """Summary Agent 节点函数"""
-    # TODO Sprint 3
-    raise NotImplementedError
+    """Compatibility entrypoint that reuses the deterministic synthesizer."""
+    evidence = state.get("evidence") or state.get("context", {}).get("evidence", [])
+    synthesis = Synthesizer().synthesize(evidence)
+    execution_path = [*state.get("execution_path", []), "summary_agent"]
+    return {**state, "synthesis": synthesis, "execution_path": execution_path}

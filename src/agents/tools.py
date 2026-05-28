@@ -8,6 +8,9 @@ import operator
 
 from langchain_core.tools import tool
 
+from src.agents.orchestrator import RetrievalOrchestrator
+from src.agents.synthesizer import Synthesizer
+
 _MAX_EXPRESSION_LENGTH = 120
 _MAX_POWER_EXPONENT = 10
 
@@ -43,15 +46,24 @@ def _evaluate_math_expression(node: ast.AST) -> int | float:
 @tool
 def search_kb(query: str, top_k: int = 5) -> str:
     """检索企业知识库，返回 Top-K 相关 evidence。"""
-    # TODO Sprint 3: 接 retrieval services
-    raise NotImplementedError
+    evidence = RetrievalOrchestrator(top_k=top_k).gather_evidence(query, [])
+    if not evidence:
+        return "No local evidence was retrieved."
+    lines = []
+    for index, item in enumerate(evidence, start=1):
+        source = item.get("source", "unknown source")
+        page = item.get("page")
+        content = str(item.get("content", "")).strip()
+        citation = f"{source}, page {page}" if page is not None else source
+        lines.append(f"{index}. {content} [source: {citation}]")
+    return "\n".join(lines)
 
 
 @tool
 def summarize_evidence(query: str) -> str:
     """对检索结果做结构化总结。"""
-    # TODO Sprint 3: 接 synthesizer / reporter 的轻量路径
-    raise NotImplementedError
+    evidence = RetrievalOrchestrator().gather_evidence(query, [])
+    return Synthesizer().synthesize(evidence)
 
 
 @tool

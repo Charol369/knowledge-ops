@@ -1,8 +1,8 @@
-# KnowledgeOps · 完整部署 stack（Sprint 4 LLMOps 用）
+# KnowledgeOps · 本地集成 stack（手动验证用）
 # 用法：docker compose up -d
 #
-# W1 末骨架版：定义服务但不强制 Boss 现在跑 docker（Day6 已经证明云端 Langfuse + FAISS 就够 W1-Sprint 3 用）。
-# Sprint 4 真正切到自托管 LLMOps 时再 docker compose up。
+# Sprint 5 本地验收不强制启动 Docker；如需验证 Milvus / Langfuse / app
+# 全量联调，可按 docs/delivery.md 手动运行并记录输出。
 
 services:
   # =============== Vector DB ===============
@@ -73,5 +73,6 @@ services:
     volumes:
       - ./data/pdfs:/app/data/pdfs
 
-# TODO Sprint 4: 加 nginx reverse proxy + Let's Encrypt
-# TODO Sprint 5: 加 ElasticSearch（如果稀疏检索规模 > rank-bm25 能撑的范围）
+# Future production hardening, not verified in Sprint 5 local smoke:
+# - nginx reverse proxy + TLS
+# - external sparse-search backend if rank-bm25 no longer satisfies scale needs

@@ -308,15 +308,15 @@ question
 
 ---
 
-## 📈 性能指标目标（W6 末）
+## 📈 性能指标目标与当前状态
 
-| 指标 | 目标 | 测试方法 |
+| 指标 | 目标 | 当前状态 |
 |---|---|---|
-| 检索 Recall@5 | ≥ 85% | RAGAS context_recall + 测试集 |
-| 端到端 P95 延迟 | < 3s | Locust |
-| 幻觉率 | ≤ 5% | faithfulness |
-| 单 query 成本 | < ¥0.05 | Langfuse cost tracking |
-| 最大并发 | ≥ 100 QPS | Locust |
+| 检索 Recall@5 | ≥ 85% | `pending_labeled_eval`，缺少已标注 QA 集 |
+| 端到端 P95 延迟 | < 3s | `pending_load_test`，未运行 Locust 100 QPS x 5min |
+| 幻觉率 | ≤ 5% | `pending_real_run`，未运行真实 RAGAS |
+| 单 query 成本 | < ¥0.05 | 待测，本地 smoke 无真实 LLM 计费 |
+| 最大并发 | ≥ 100 QPS | `pending_load_test` |
 
 ### 额外建议跟踪指标
 - tool call success rate
@@ -332,10 +332,10 @@ question
 | Sprint | 周次 | 目标 | 验收 |
 |---|---|---|---|
 | **Sprint 1** | W2 | 最小研究闭环 + 证据管线 | CLI research pipeline 跑通 |
-| **Sprint 2** | W3 | 检索增强 + 上下文工程 | Recall@5 达标 + Context Builder 可用 |
+| **Sprint 2** | W3 | 检索增强 + 上下文工程 | Context Builder 可用；Recall@5 待真实标注集 |
 | **Sprint 3** | W4 | 混合范式 Agent 图 + MCP | graph + MCP 接入验证 |
-| **Sprint 4** | W5 | Policy Layer + LLMOps | 模型路由 + Langfuse + Guardrails |
-| **Sprint 5** | W6 | 研究助手 Demo + 投实习 | Docker 一键起 + Demo + 简历视频 |
+| **Sprint 4** | W5 | Policy Layer + LLMOps | 模型路由 + Langfuse dry-run + Guardrails |
+| **Sprint 5** | W6 | Streaming + Demo + benchmark + docs | 本地 demo/API/benchmark smoke；Docker、云部署、视频、简历为手动边界 |
 
 ---
 

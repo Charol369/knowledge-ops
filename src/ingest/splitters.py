@@ -23,9 +23,19 @@ def split_recursive(
 
 
 def split_by_doc_type(docs: list[Document]) -> list[Document]:
-    """按文档类型差异化分块（Sprint 2）"""
-    # TODO Sprint 2:
-    #   - 论文 / 技术文档 → chunk_size 300-500
-    #   - 叙事 / 新闻 → chunk_size 800-1500
-    #   - FAQ / 结构化 → 一条一块，不切
-    raise NotImplementedError
+    """按文档类型差异化分块，保留 recursive splitter 作为确定性实现。"""
+    chunks: list[Document] = []
+    for doc in docs:
+        source = str(doc.metadata.get("source", "")).lower()
+        content = doc.page_content.lower()
+        if _looks_like_faq(source, content):
+            chunks.append(doc)
+        elif source.endswith((".pdf", ".md", ".rst")):
+            chunks.extend(split_recursive([doc], chunk_size=400, overlap=50))
+        else:
+            chunks.extend(split_recursive([doc], chunk_size=800, overlap=80))
+    return chunks
+
+
+def _looks_like_faq(source: str, content: str) -> bool:
+    return "faq" in source or "q:" in content or "question:" in content

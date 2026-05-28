@@ -12,6 +12,9 @@ System prompt 的 7 层结构（Day2 Anthropic Ch9）：
 Sprint 3 任务。
 """
 from src.agents.graph import AgentState
+from src.agents.reporter import Reporter
+from src.agents.synthesizer import Synthesizer
+from src.guardrails.citation import extract_citations
 
 
 QA_SYSTEM_PROMPT = """你是企业知识库问答专家。
@@ -31,9 +34,17 @@ JSON: {"answer": "...", "citations": [{"source": "...", "page": N}], "confidence
 
 
 def qa_agent(state: AgentState) -> dict:
-    """QA Agent 节点函数"""
-    # TODO Sprint 3:
-    #   1. 拼 prompt = QA_SYSTEM_PROMPT + <context>{state['context']}</context> + question
-    #   2. llm.with_structured_output(Answer).invoke(...)
-    #   3. 返回 {"answer": ..., "citations": ...}
-    raise NotImplementedError
+    """Compatibility entrypoint that answers from existing local evidence."""
+    evidence = state.get("evidence") or state.get("context", {}).get("evidence", [])
+    synthesis = state.get("synthesis") or Synthesizer().synthesize(evidence)
+    answer = Reporter().render(state.get("question", ""), synthesis)
+    citations = extract_citations(answer)
+    execution_path = [*state.get("execution_path", []), "qa_agent"]
+    return {
+        **state,
+        "synthesis": synthesis,
+        "answer": answer,
+        "citations": citations,
+        "confidence": 0.8 if citations else 0.0,
+        "execution_path": execution_path,
+    }

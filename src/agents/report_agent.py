@@ -10,6 +10,9 @@ Sprint 3 任务。
   ## 参考文献（编号列表）
 """
 from src.agents.graph import AgentState
+from src.agents.reporter import Reporter
+from src.agents.synthesizer import Synthesizer
+from src.guardrails.citation import extract_citations
 
 
 REPORT_SYSTEM_PROMPT = """你是技术报告作者。
@@ -21,6 +24,15 @@ REPORT_SYSTEM_PROMPT = """你是技术报告作者。
 
 
 def report_agent(state: AgentState) -> dict:
-    """Report Agent 节点函数"""
-    # TODO Sprint 3
-    raise NotImplementedError
+    """Compatibility entrypoint that renders the existing synthesis as a report."""
+    evidence = state.get("evidence") or state.get("context", {}).get("evidence", [])
+    synthesis = state.get("synthesis") or Synthesizer().synthesize(evidence)
+    answer = Reporter().render(state.get("question", ""), synthesis)
+    execution_path = [*state.get("execution_path", []), "report_agent"]
+    return {
+        **state,
+        "synthesis": synthesis,
+        "answer": answer,
+        "citations": extract_citations(answer),
+        "execution_path": execution_path,
+    }

@@ -40,6 +40,23 @@ class QueryResponse(BaseModel):
     needs_human_review: bool = False
 
 
+class FeedbackRequest(BaseModel):
+    trace_id: str = Field(min_length=1, max_length=256)
+    score: float = Field(ge=-1, le=1)
+    comment: str | None = Field(default=None, max_length=2000)
+    source: str | None = Field(default=None, max_length=128)
+    name: str = Field(default="user_feedback", min_length=1, max_length=128)
+
+
+class FeedbackResponse(BaseModel):
+    status: str
+    trace_id: str
+    score: float
+    storage: str
+    langfuse_status: str
+    blocked_reason: str | None = None
+
+
 class IngestRequest(BaseModel):
     path: str = Field(min_length=1, description="Local file or directory path to ingest.")
     glob: str = Field(default="**/*", min_length=1)
