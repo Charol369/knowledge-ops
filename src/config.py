@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     top_k_dense: int = 10
     top_k_sparse: int = 10
     top_k_final: int = 5
+    query_transform_enabled: bool = False
+    query_transform_count: int = 3
+    rerank_enabled: bool = False
+    rerank_model_name: str = "BAAI/bge-reranker-v2-m3"
     max_plan_steps: int = 4
     max_reflection_rounds: int = 1
 

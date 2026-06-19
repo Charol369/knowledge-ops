@@ -30,6 +30,15 @@ from src.retrieval.hybrid import reciprocal_rank_fusion
 from src.retrieval.sparse import BM25Retriever
 
 
+def write_json_output(payload: dict[str, Any], output_path: str | Path | None) -> None:
+    """Persist benchmark output when the caller wants a reproducible artifact."""
+    if output_path is None:
+        return
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 def run_retrieval_benchmark(
     docs: list[Document],
     query: str,
@@ -111,6 +120,11 @@ def main() -> int:
     parser.add_argument("--docs-dir", default="data")
     parser.add_argument("--query", default="Summarize the indexed evidence")
     parser.add_argument(
+        "--output",
+        default=None,
+        help="Optional path to persist the JSON benchmark result.",
+    )
+    parser.add_argument(
         "--embedding-backend",
         default="hash",
         choices=["hash", "local", "fake", "huggingface"],
@@ -124,6 +138,7 @@ def main() -> int:
             "blocked_reason": f"Local docs directory does not exist: {docs_dir}",
         }
         print(json.dumps(result, ensure_ascii=False, indent=2))
+        write_json_output(result, args.output)
         return 0
 
     docs = split_recursive(load_directory(docs_dir))
@@ -135,6 +150,7 @@ def main() -> int:
         embedder=get_embedder(backend=args.embedding_backend),
     )
     print(json.dumps(result, ensure_ascii=False, indent=2))
+    write_json_output(result, args.output)
     return 0 if result["status"] in {"ok", "blocked"} else 1
 
 

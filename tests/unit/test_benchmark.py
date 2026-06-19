@@ -1,7 +1,7 @@
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 
-from scripts.benchmark import run_retrieval_benchmark
+from scripts.benchmark import run_retrieval_benchmark, write_json_output
 
 
 class KeywordEmbeddings(Embeddings):
@@ -47,3 +47,13 @@ def test_retrieval_benchmark_smoke_reports_dense_and_hybrid_without_metrics():
     assert result["retrieval"]["dense"]["top_k"] == 2
     assert result["retrieval"]["hybrid"]["top_k"] == 2
     assert result["metrics"]["recall_at_5"] == "pending_labeled_eval"
+
+
+def test_benchmark_can_persist_json_output(tmp_path):
+    output = tmp_path / "results" / "benchmark.json"
+    payload = {"status": "ok", "retrieval": {"dense": {"returned": 1}}}
+
+    write_json_output(payload, output)
+
+    assert output.exists()
+    assert '"status": "ok"' in output.read_text(encoding="utf-8")

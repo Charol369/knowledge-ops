@@ -1,0 +1,36 @@
+{
+  "status": "ok",
+  "query": "Summarize the indexed evidence",
+  "documents": 93,
+  "retrieval": {
+    "dense": {
+      "top_k": 5,
+      "returned": 5,
+      "latency_seconds": 0.09106050000991672,
+      "sources": [
+        "data\\attention_is_all_you_need.pdf",
+        "data\\attention_is_all_you_need.pdf",
+        "data\\attention_is_all_you_need.pdf",
+        "data\\attention_is_all_you_need.pdf",
+        "data\\attention_is_all_you_need.pdf"
+      ]
+    },
+    "hybrid": {
+      "top_k": 5,
+      "returned": 5,
+      "latency_seconds": 0.003817100019659847,
+      "sources": [
+        "data\\attention_is_all_you_need.pdf",
+        "data\\attention_is_all_you_need.pdf",
+        "data\\attention_is_all_you_need.pdf",
+        "data\\attention_is_all_you_need.pdf",
+        "data\\attention_is_all_you_need.pdf"
+      ]
+    }
+  },
+  "metrics": {
+    "recall_at_5": "pending_labeled_eval",
+    "ragas": "pending_real_run",
+    "qps": "pending_load_test"
+  }
+}

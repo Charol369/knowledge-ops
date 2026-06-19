@@ -2,6 +2,8 @@
 
 Date: 2026-05-28
 
+Updated: 2026-06-19
+
 This document provides safe resume wording, a 5-minute project explanation, and interview FAQ for KnowledgeOps.
 
 ## Verified Facts
@@ -11,14 +13,16 @@ Use these facts in resumes, interviews, README summaries, and demo scripts.
 - Built a FastAPI + LangGraph research-oriented Knowledge Agent for local enterprise-document research workflows.
 - Implemented a deterministic pipeline: `plan -> retrieve -> synthesize -> report -> verify`.
 - Implemented local ingestion for PDF, Word, and HTML, with source/page metadata for evidence and citations.
-- Implemented FAISS dense retrieval, BM25 sparse retrieval, RRF hybrid fusion, query transforms, Context Builder, and artifact persistence.
+- Implemented FAISS dense retrieval, BM25 sparse retrieval, RRF hybrid fusion, Context Builder, and artifact persistence.
+- Implemented query transform and Cross-Encoder rerank as optional enhancement modules; both are disabled by default in local smoke runs.
 - Implemented citation extraction/validation and structured answer validation.
 - Implemented graph-backed `/api/v1/query`, SSE `/api/v1/query/stream`, local `/api/v1/feedback`, and `/api/v1/ingest`.
 - Implemented API key authentication, local in-memory rate limiting, guardrails, Unicode normalization, prompt-injection detection, model routing, cache/retry/fallback primitives, and business metrics.
 - Implemented MCP tool/resource layer for local retrieval and summarization services.
 - Implemented Streamlit demo that calls the backend API and displays progress, plan, answer, citations, trace/session metadata, and feedback.
 - Added explicit dry-run/local fallback boundaries so local tests do not require paid external models, real API keys, real Langfuse, real Redis/Postgres, Docker daemon, or cloud services.
-- Verified the current local baseline with `66` passing tests.
+- Verified the current local baseline with `71` passing tests and `3` third-party warnings.
+- Measured a small 20-case local source/page retrieval set: dense Hit@5 / Recall@5 `0.75`, hybrid Hit@5 / Recall@5 `1.0`. This is not RAGAS or end-to-end answer-quality evaluation.
 
 ## Unsafe Claims Until Measured
 
@@ -46,7 +50,7 @@ KnowledgeOps - 生产导向研究型 Knowledge Agent 系统
 - 基于 FastAPI + LangGraph 构建研究型 Knowledge Agent，将复杂问题拆成 plan -> retrieve -> synthesize -> report -> verify 工作流，避免把检索、引用校验、评估等确定性链路全部 agent 化。
 - 实现 PDF/Word/HTML 本地入库、FAISS dense retrieval、BM25 + RRF hybrid retrieval、Context Builder、artifact persistence、citation validation、MCP tool/resource layer，并提供 REST/SSE 查询与 Streamlit demo。
 - 加入模型路由、cache/retry/fallback、API key auth、in-memory rate limit、prompt-injection guardrails、Unicode normalization、business metrics 与 Langfuse dry-run-safe 接入边界。
-- 使用 pytest 覆盖 ingestion、retrieval、graph/API/MCP、policy、guardrails、observability、streaming、feedback 与 demo helper，当前本地验证 66 tests passed；Recall@5/RAGAS/QPS/P95 等真实指标保留为待标注数据集和压测后更新。
+- 使用 pytest 覆盖 ingestion、retrieval、graph/API/MCP、policy、guardrails、observability、streaming、feedback 与 demo helper，当前本地验证 71 tests passed；20 条本地 source/page 标注集上 hybrid Hit@5 / Recall@5 为 1.0，RAGAS/QPS/P95/真实成本仍保留为待真实环境验证项。
 ```
 
 ## Short Resume Version
@@ -54,7 +58,7 @@ KnowledgeOps - 生产导向研究型 Knowledge Agent 系统
 Use this version when space is tight.
 
 ```text
-KnowledgeOps - 研究型 Knowledge Agent：基于 FastAPI + LangGraph 实现 plan -> retrieve -> synthesize -> report -> verify 工作流，集成 hybrid retrieval、Context Builder、citation validation、MCP、SSE streaming、feedback、auth/rate limit、guardrails 和 Streamlit demo；本地 pytest 66 tests passed，指标边界按真实 benchmark/smoke 输出记录。
+KnowledgeOps - 研究型 Knowledge Agent：基于 FastAPI + LangGraph 实现 plan -> retrieve -> synthesize -> report -> verify 工作流，集成 hybrid retrieval、Context Builder、citation validation、MCP、SSE streaming、feedback、auth/rate limit、guardrails 和 Streamlit demo；本地 pytest 71 tests passed，20 条本地 source/page 标注集上 hybrid Hit@5 / Recall@5 为 1.0，指标边界按真实 benchmark/smoke 输出记录。
 ```
 
 ## 5-Minute Project Explanation
@@ -97,7 +101,7 @@ Agent 层负责规划、证据整合、报告和校验；检索、分块、引�
 
 - Sprint 1 先做 FAISS dense baseline；
 - Sprint 2 加 BM25 sparse 和 RRF fusion；
-- query transform、rerank、Context Builder 都做成独立模块；
+- query transform、rerank、Context Builder 都做成独立模块；其中 query transform 和 rerank 默认关闭，作为可选增强层，不影响本地 smoke 主链路；
 - evidence metadata 保留 source/page，供 citation validation 使用。
 
 这样设计的原因是：实际企业知识库中有精确术语、缩写、表格字段和长文档标题，纯向量召回不够稳定。Hybrid retrieval 和 context builder 可以让检索结果更可控，也更容易评估。
@@ -139,9 +143,9 @@ LangGraph graph 使用固定研究流程，不是教学式的泛 Agent demo。
 - Streamlit demo 展示 question、progress、plan、answer、citations、trace/session 和 feedback；
 - MCP server 暴露 retrieval/summarization 能力。
 
-当前本地验证是 `66 tests passed`，benchmark smoke 能跑 dense/hybrid retrieval 并返回 top-5 evidence。
+当前本地验证是 `71 tests passed`，benchmark smoke 能跑 dense/hybrid retrieval 并返回 top-5 evidence。当前 20 条本地 source/page 标注集上 dense Hit@5 / Recall@5 为 `0.75`，hybrid Hit@5 / Recall@5 为 `1.0`。
 
-但我不会声称 Recall@5、RAGAS、P95、QPS 或成本已经达标，因为这些需要标注 QA 集、真实评估命令和压测环境。下一步会先做 20 条 QA 标注集，补一个可复现的 retrieval Hit@5 / Recall@5。
+但我不会声称生产 Recall@5、RAGAS、P95、QPS 或成本已经达标，因为这些需要更大标注集、真实模型/观测配置、真实评估命令和压测环境。
 
 ## Interview FAQ
 
@@ -173,8 +177,9 @@ MCP exposes retrieval and summarization capabilities as standard tools/resources
 
 Measured:
 
-- local tests: `66 passed`;
+- local tests: `71 passed`;
 - benchmark smoke: dense/hybrid top-5 retrieval returns evidence from local data;
+- small local retrieval eval: dense Hit@5 / Recall@5 `0.75`, hybrid Hit@5 / Recall@5 `1.0` on 20 source/page labeled cases;
 - local API/Streamlit/feedback/streaming smoke.
 
 Pending:

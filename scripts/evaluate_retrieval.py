@@ -33,6 +33,15 @@ from src.retrieval.sparse import BM25Retriever
 RetrievalCase = dict[str, Any]
 
 
+def write_json_output(payload: dict[str, Any], output_path: str | Path | None) -> None:
+    """Persist retrieval evaluation output as a reproducible local artifact."""
+    if output_path is None:
+        return
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 def load_cases(dataset_path: Path) -> list[RetrievalCase]:
     """Load JSONL retrieval cases."""
     cases: list[RetrievalCase] = []
@@ -204,6 +213,11 @@ def main() -> int:
     parser.add_argument("--retrieval", default="dense,hybrid")
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument(
+        "--output",
+        default=None,
+        help="Optional path to persist the JSON evaluation result.",
+    )
+    parser.add_argument(
         "--embedding-backend",
         default="hash",
         choices=["hash", "local", "fake", "huggingface"],
@@ -213,28 +227,20 @@ def main() -> int:
     dataset_path = Path(args.dataset)
     docs_dir = Path(args.docs_dir)
     if not dataset_path.exists():
-        print(
-            json.dumps(
-                {
-                    "status": "blocked",
-                    "blocked_reason": f"Dataset does not exist: {dataset_path}",
-                },
-                ensure_ascii=False,
-                indent=2,
-            )
-        )
+        result = {
+            "status": "blocked",
+            "blocked_reason": f"Dataset does not exist: {dataset_path}",
+        }
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        write_json_output(result, args.output)
         return 0
     if not docs_dir.exists():
-        print(
-            json.dumps(
-                {
-                    "status": "blocked",
-                    "blocked_reason": f"Local docs directory does not exist: {docs_dir}",
-                },
-                ensure_ascii=False,
-                indent=2,
-            )
-        )
+        result = {
+            "status": "blocked",
+            "blocked_reason": f"Local docs directory does not exist: {docs_dir}",
+        }
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        write_json_output(result, args.output)
         return 0
 
     cases = load_cases(dataset_path)
@@ -250,6 +256,7 @@ def main() -> int:
     result["docs_dir"] = str(docs_dir)
     result["embedding_backend"] = args.embedding_backend
     print(json.dumps(result, ensure_ascii=False, indent=2))
+    write_json_output(result, args.output)
     return 0 if result["status"] in {"ok", "blocked"} else 1
 
 

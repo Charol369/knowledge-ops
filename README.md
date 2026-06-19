@@ -77,20 +77,42 @@ graph TD
 - 🧱 **认知链路 Agent 化，执行链路服务化**：检索 / 重排 / 引用校验 / 评估保持 deterministic services
 - 💸 **成本治理**：复杂度判定 + 模型路由 + 缓存 / fallback，不默认把所有请求打到最高价模型
 - 🔌 **MCP Server**：自研协议接口，可被 Claude Desktop / Cursor / Cline 直接调用
-- 📊 **LLMOps 完整链路**：Langfuse 全链路追踪 + RAGAS 自动评估 + Guardrails 防护（结构化输出 + 注入检测 + 引用强制）
+- 📊 **LLMOps 本地安全边界**：Langfuse dry-run-safe 接入、RAGAS dry-run scaffold、业务指标和 Guardrails 防护（结构化输出 + 注入检测 + 引用强制）
 - ⚡ **本地可演示交付**：FastAPI REST/SSE、Streamlit demo、反馈捕获、benchmark smoke；Docker / 云部署 / 100 QPS 压测保持手动或环境相关边界
+
+## ✅ 实现状态边界
+
+| 模块 / 能力 | 状态 | 说明 |
+|---|---|---|
+| FastAPI `/api/v1/query` | 已接入 | graph-backed 查询入口 |
+| FastAPI `/api/v1/query/stream` | 已接入 | 有界 SSE wrapper，非 token-level LLM streaming |
+| `/api/v1/feedback` | 已接入 | 本地内存捕获，Langfuse 配置完整时可转发 score |
+| PDF / Word / HTML ingest | 已接入 | 本地 loader + splitter，保留 source/page metadata |
+| FAISS dense retrieval | 已接入 | 默认本地可跑；测试默认使用 hash embedding |
+| BM25 sparse retrieval | 已接入 | `rank-bm25` 本地稀疏检索 |
+| RRF hybrid retrieval | 已接入 | 当前主链路核心检索策略 |
+| Context Builder | 已接入 | evidence 去重、排序、截断和上下文格式化 |
+| Citation validation | 已接入 | verifier 节点用于校验引用和 human-review flag |
+| MCP Server | 已实现并测试 | stdio server；外部 MCP client 接入属于手动验证 |
+| Query Transform | 已实现，默认关闭 | `QUERY_TRANSFORM_ENABLED=false`；开启后扩展候选查询 |
+| Cross-Encoder Rerank | 已实现，默认关闭 | `RERANK_ENABLED=false`；本地模型缺失时回退，不伪造 rerank 分数 |
+| Langfuse | dry-run / optional | 默认 `LANGFUSE_ENABLED=false`，未声明真实 dashboard trace |
+| RAGAS | dry-run scaffold | 未运行真实 RAGAS 指标 |
+| Docker Compose | manual boundary | 配置存在，当前 README 不声明全量联调已完成 |
+| Locust / 100 QPS | manual boundary | 脚本存在，未运行 100 QPS x 5min |
+| Cloud deployment | manual boundary | 未声明公网部署完成 |
 
 ## 📈 性能指标状态
 
 | 指标 | 目标 | Baseline (Sprint 2) | Final (Sprint 5) |
 |---|---|---|---|
-| 检索 Recall@5 | ≥ 85% | _待测_ | `pending_labeled_eval` |
+| 检索 Recall@5 | ≥ 85% | _待测_ | local 20-case source/page Hit@5：dense `0.75`，hybrid `1.0`；生产级 Recall@5 待测 |
 | 端到端 P95 延迟 | < 3s | _待测_ | `pending_load_test` |
 | 幻觉率（RAGAS Faithfulness） | ≤ 5% | _待测_ | `pending_real_run` |
 | 单 query 成本 | < ¥0.05 | _待测_ | _待测，本地 smoke 无真实 LLM 计费_ |
 | 最大并发 | ≥ 100 QPS | _待测_ | `pending_load_test` |
 
-已执行的 Sprint 5 benchmark smoke：`uv run python scripts/benchmark.py --retrieval dense,hybrid --top-k 5`，返回 `status=ok`、`documents=93`、dense `0.06787819997407496s`、hybrid `0.007698599947616458s`。Recall@5、RAGAS、P95、成本、QPS 未在本地命令中测出，详见 [docs/benchmark.md](docs/benchmark.md)。
+已执行的 Sprint 5 benchmark smoke：`uv run python scripts/benchmark.py --retrieval dense,hybrid --top-k 5`，返回 `status=ok`、`documents=93`，dense/hybrid 均返回 5 条候选。小规模 retrieval eval：`uv run python scripts/evaluate_retrieval.py --dataset eval/retrieval_qa.jsonl --docs-dir data --retrieval dense,hybrid --top-k 5 --embedding-backend hash`，20 条本地 source/page 标注集上 dense Hit@5 / Recall@5 为 `0.75`，hybrid 为 `1.0`。RAGAS、P95、成本、QPS 未在本地命令中测出，详见 [docs/benchmark.md](docs/benchmark.md)。
 
 ## 🚀 快速开始
 

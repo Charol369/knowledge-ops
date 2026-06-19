@@ -1,6 +1,6 @@
 from langchain_core.documents import Document
 
-from scripts.evaluate_retrieval import is_relevant, score_case, summarize_mode
+from scripts.evaluate_retrieval import is_relevant, score_case, summarize_mode, write_json_output
 
 
 def test_retrieval_eval_matches_expected_source_and_page():
@@ -43,3 +43,13 @@ def test_retrieval_eval_scores_hit_rank_and_summary_metrics():
     assert summary["hit_at_k"] == 1.0
     assert summary["question_recall_at_k"] == 1.0
     assert summary["mrr_at_k"] == 0.5
+
+
+def test_retrieval_eval_can_persist_json_output(tmp_path):
+    output = tmp_path / "eval" / "retrieval.json"
+    payload = {"status": "ok", "metrics": {"hybrid": {"hit_at_k": 1.0}}}
+
+    write_json_output(payload, output)
+
+    assert output.exists()
+    assert '"hit_at_k": 1.0' in output.read_text(encoding="utf-8")

@@ -114,6 +114,31 @@ graph TD
 
 ---
 
+## ✅ 当前实现状态边界
+
+| 模块 / 能力 | 状态 | 架构边界 |
+|---|---|---|
+| `planner -> retrieval_orchestrator -> synthesizer -> reporter -> verifier` | 已接入主链路 | 固定 LangGraph 流程，不是自由游走的多 Agent |
+| `/api/v1/query` | 已接入主链路 | 调用 graph-backed 查询 |
+| `/api/v1/query/stream` | 已接入主链路 | 有界 SSE wrapper，复用 query 合约 |
+| `/api/v1/feedback` | 已接入主链路 | 本地指标记录，Langfuse 可选转发 |
+| FAISS dense retrieval | 已接入主链路 | 默认本地 smoke 使用 hash embedding |
+| BM25 sparse retrieval | 已接入主链路 | 关键词/术语召回补充 |
+| RRF hybrid retrieval | 已接入主链路 | 当前默认融合策略 |
+| Context Builder | 已接入主链路 | evidence 去重、排序、截断、格式化 |
+| Citation validation | 已接入主链路 | verifier 校验 answer citations |
+| Query Transform | 已实现，默认关闭 | `QUERY_TRANSFORM_ENABLED=false`；开启后扩展候选查询 |
+| Cross-Encoder Rerank | 已实现，默认关闭 | `RERANK_ENABLED=false`；本地模型缺失时回退原候选，不伪造分数 |
+| Langfuse | dry-run / optional | 默认 disabled，未声明真实 dashboard trace |
+| RAGAS | dry-run scaffold | 未运行真实 RAGAS 指标 |
+| Docker Compose / Milvus / Langfuse stack | manual boundary | 配置存在，未声明本次全量联调已完成 |
+| Locust / 100 QPS | manual boundary | 脚本存在，未声明已压测达标 |
+| Cloud deployment | manual boundary | 未声明已公网部署 |
+
+当前默认查询链路是：`question -> planner -> dense + BM25 -> RRF -> Context Builder -> synthesize/report -> citation verification`。Query Transform 和 Cross-Encoder Rerank 是可选增强层，不是默认 smoke 的必要条件。
+
+---
+
 ## 📦 分层解释
 
 ## 1. Deterministic Service Layer：不该 Agent 化的部分
@@ -312,7 +337,7 @@ question
 
 | 指标 | 目标 | 当前状态 |
 |---|---|---|
-| 检索 Recall@5 | ≥ 85% | `pending_labeled_eval`，缺少已标注 QA 集 |
+| 检索 Recall@5 | ≥ 85% | 20 条本地 source/page 标注集：dense Hit@5 / Recall@5 `0.75`，hybrid `1.0`；生产级 Recall@5 待更大标注集 |
 | 端到端 P95 延迟 | < 3s | `pending_load_test`，未运行 Locust 100 QPS x 5min |
 | 幻觉率 | ≤ 5% | `pending_real_run`，未运行真实 RAGAS |
 | 单 query 成本 | < ¥0.05 | 待测，本地 smoke 无真实 LLM 计费 |

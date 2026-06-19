@@ -16,6 +16,8 @@ from src.ingest.splitters import split_recursive
 from src.retrieval.context_builder import ContextBuilder
 from src.retrieval.dense import build_index, load_index, search
 from src.retrieval.hybrid import reciprocal_rank_fusion
+from src.retrieval.query_transform import multi_query_expand
+from src.retrieval.rerank import CrossEncoderReranker
 from src.retrieval.sparse import BM25Retriever
 
 
@@ -55,13 +57,55 @@ class RetrievalOrchestrator:
         except Exception:
             vectorstore = build_index(chunks, embedder, index_dir=self.index_dir)
 
-        dense_results = search(vectorstore, question, k=self.top_k)
-        sparse_results = BM25Retriever(chunks).search(question, k=self.top_k)
-        fused = reciprocal_rank_fusion(
-            [dense_results, sparse_results],
-            top_n=self.top_k,
+        sparse_retriever = BM25Retriever(chunks)
+        fused_by_query: list[list[Document]] = []
+        for candidate_query in self._candidate_queries(question):
+            dense_results = search(vectorstore, candidate_query, k=self.top_k)
+            sparse_results = sparse_retriever.search(candidate_query, k=self.top_k)
+            fused_by_query.append(
+                reciprocal_rank_fusion(
+                    [dense_results, sparse_results],
+                    top_n=self.top_k,
+                )
+            )
+
+        if not fused_by_query:
+            return []
+        fused = (
+            fused_by_query[0]
+            if len(fused_by_query) == 1
+            else reciprocal_rank_fusion(fused_by_query, top_n=self.top_k)
         )
-        return [_doc_to_evidence(doc) for doc in fused]
+        ranked = self._maybe_rerank(question, fused)
+        return [_doc_to_evidence(doc) for doc in ranked]
+
+    def _candidate_queries(self, question: str) -> list[str]:
+        if not settings.query_transform_enabled:
+            return [question]
+        candidates = multi_query_expand(
+            question,
+            n=max(1, settings.query_transform_count),
+        )
+        deduped: list[str] = []
+        seen: set[str] = set()
+        for candidate in candidates:
+            normalized = candidate.strip()
+            if normalized and normalized not in seen:
+                deduped.append(normalized)
+                seen.add(normalized)
+        return deduped or [question]
+
+    def _maybe_rerank(self, question: str, docs: list[Document]) -> list[Document]:
+        if not settings.rerank_enabled:
+            return docs
+        result = CrossEncoderReranker(model_name=settings.rerank_model_name).rerank(
+            question,
+            docs,
+            top_k=self.top_k,
+        )
+        if result.status == "ok":
+            return result.documents
+        return docs
 
 
 def retrieval_orchestrator_node(state: dict[str, Any]) -> dict[str, Any]:

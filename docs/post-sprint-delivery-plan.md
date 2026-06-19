@@ -2,6 +2,8 @@
 
 Date: 2026-05-28
 
+Updated: 2026-06-19
+
 ## Current State
 
 KnowledgeOps has completed the Sprint 1-5 local delivery baseline and has been pushed to GitHub.
@@ -9,14 +11,22 @@ KnowledgeOps has completed the Sprint 1-5 local delivery baseline and has been p
 Latest pushed commit:
 
 ```text
-9e4a511 feat: complete sprint 5 delivery
+e642c7c eval: add small retrieval hit benchmark
 ```
 
 Verified local baseline:
 
 ```text
 uv run pytest -q
-# 66 passed, 3 warnings
+# 71 passed, 3 warnings
+```
+
+Small local retrieval evaluation:
+
+```text
+uv run python scripts/evaluate_retrieval.py --dataset eval/retrieval_qa.jsonl --docs-dir data --retrieval dense,hybrid --top-k 5 --embedding-backend hash --output eval/results/retrieval_latest.json
+# dense Hit@5 / Recall@5: 0.75 (15/20)
+# hybrid Hit@5 / Recall@5: 1.0 (20/20)
 ```
 
 Implemented and locally verified:
@@ -27,16 +37,12 @@ Implemented and locally verified:
 - Sprint 4: policy routing, cache/retry/fallback, guardrails, trace_id, business metrics, Langfuse dry-run safe path, auth, rate limit, optional memory boundary.
 - Sprint 5: `/api/v1/query/stream`, `/api/v1/feedback`, Streamlit demo, feedback capture, final docs, delivery boundary, benchmark smoke.
 
-Known local worktree issue:
-
-- `docs/development.md` has one pre-existing whitespace-only diff.
-
 Known delivery boundaries:
 
 - Docker Compose full integration has not been run as a verified acceptance result.
 - Cloud deployment has not been completed.
 - Locust 100 QPS x 5min has not been run.
-- Real RAGAS metrics and Recall@5 have not been measured against a labeled QA set.
+- Real RAGAS metrics and production-scale Recall@5 have not been measured against a larger labeled QA set.
 - Real Langfuse dashboard trace and real Postgres/Redis integration have not been verified.
 - Demo video, resume finalization, and job applications are manual actions and have not been completed by the codebase.
 
@@ -44,14 +50,14 @@ Known delivery boundaries:
 
 Do not add new KnowledgeOps features until the project has been converted into a reliable job-search asset.
 
-The next work is not another implementation Sprint. It is delivery hardening:
+The next work is not another implementation Sprint. It is portfolio hardening:
 
-1. Clean repository state.
-2. Produce safe project claims.
-3. Create demo material.
-4. Add a small real evaluation set.
-5. Prepare resume and interview narratives.
-6. Then start project 2 in a separate repository.
+1. Align status documents with `e642c7c`, `71 passed`, and the 20-case hybrid `1.0` retrieval result.
+2. Add implementation-boundary tables to README and architecture docs.
+3. Persist benchmark/eval outputs with `--output`.
+4. Keep query transform and rerank as optional config-gated enhancements.
+5. Add CI and only add a badge after remote CI is actually green.
+6. Prepare resume, interview narrative, demo script, and screenshots without overstating pending work.
 
 ## Phase 1: Repository Closure
 
@@ -59,7 +65,6 @@ Goal: make the repository clean and reproducible.
 
 Checklist:
 
-- Resolve the whitespace-only `docs/development.md` diff by either committing it with documentation updates or reverting it explicitly.
 - Run `git status --short --branch`.
 - Run `uv run pytest -q`.
 - Run `uv run python -m py_compile frontend/app.py scripts/locust_loadtest.py`.
@@ -128,7 +133,8 @@ Safe claims:
 - Implemented local document ingestion, FAISS dense retrieval, BM25 + RRF hybrid retrieval, context construction, artifact persistence, citation validation, MCP tools, auth/rate limiting, SSE streaming, feedback capture, and Streamlit demo.
 - Added deterministic local fallback paths so smoke tests do not require paid external models or real credentials.
 - Maintained explicit delivery boundaries for Docker, cloud deployment, QPS, RAGAS, Recall@5, and cost metrics.
-- Verified local behavior with `66` tests passing.
+- Verified local behavior with `71` tests passing.
+- Measured 20 local source/page labeled retrieval cases: dense Hit@5 / Recall@5 `0.75`, hybrid Hit@5 / Recall@5 `1.0`.
 
 Unsafe claims until measured:
 
@@ -150,18 +156,11 @@ Done when:
 
 Goal: produce one credible measured metric instead of relying only on smoke tests.
 
-Recommended minimum:
+Current minimum completed:
 
-- Create a small labeled QA set with 20 questions.
-- For each question record:
-  - question;
-  - expected source document;
-  - expected page or chunk identifier where possible;
-  - acceptable answer points.
-
-First metric:
-
-- retrieval Recall@5 or hit@5 for dense vs hybrid retrieval.
+- `eval/retrieval_qa.jsonl` contains 20 local source/page labeled questions.
+- `scripts/evaluate_retrieval.py` computes dense vs hybrid Hit@5 / Recall@5 and MRR@5.
+- `--output eval/results/retrieval_latest.json` persists the latest run.
 
 Do not start with:
 
@@ -239,10 +238,20 @@ Done when:
 
 Use this order unless a higher-priority blocker appears:
 
-1. Clean `knowledge-ops` working tree.
-2. Run local demo dry run.
-3. Draft resume/project explanation safely.
-4. Build a 20-question evaluation set.
-5. Add retrieval metric script and update benchmark from real output.
-6. Prepare demo video script and screenshots.
-7. Create `ts-detect-agent` repository and project 2 plan.
+1. Keep `knowledge-ops` status and docs aligned with current command output.
+2. Persist benchmark and retrieval eval JSON artifacts.
+3. Keep optional query transform / rerank behind default-off config flags.
+4. Add CI and wait for a real green run before adding badges.
+5. Prepare demo video script and screenshots.
+6. Only then consider Docker Compose full integration, real Langfuse, real bge-m3, RAGAS, and Locust.
+7. Create `ts-detect-agent` repository and project 2 plan after project 1 assets are usable.
+
+## Explicit Non-Priorities
+
+- Do not prioritize cloud deployment.
+- Do not prioritize paid LLM integration.
+- Do not rewrite Streamlit as Next.js now.
+- Do not prioritize 100 QPS now.
+- Do not start project 2 before project 1 assets are coherent.
+- Do not make every module agentic.
+- Do not chase "enterprise-grade" wording without evidence-backed claims.

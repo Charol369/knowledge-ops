@@ -1,6 +1,7 @@
 # 性能基准报告
 
 > Sprint 1-5 只记录已执行命令产生的本地结果。未运行的评测指标保持待测，不编造结果。
+> 当前推荐使用 `--output` 保存 JSON 结果到 `eval/results/`，让 benchmark 成为可复跑 artifact。
 
 ## Sprint 1 本地基线
 
@@ -87,7 +88,7 @@ Sprint 4 smoke 只验证本地可测试的 policy、guardrails、observability d
 | `uv run pytest tests/integration/test_frontend_demo.py` | `2 passed` | Streamlit demo 的 SSE parser 与 API key header helper 可导入测试 |
 | `uv run python -m py_compile frontend/app.py` | passed | Demo UI 文件语法检查通过 |
 | `uv run python -c "import streamlit; print(streamlit.__version__)"` | `1.57.0` | Sprint 5 唯一新增直接依赖可导入 |
-| `uv run python scripts/benchmark.py --retrieval dense,hybrid --top-k 5` | dense `0.06787819997407496s`; hybrid `0.007698599947616458s` | 输出 `status=ok`，`documents=93`，dense returned `5`，hybrid returned `5`，sources 均来自 `data\\attention_is_all_you_need.pdf` |
+| `uv run python scripts/benchmark.py --retrieval dense,hybrid --top-k 5 --output eval/results/benchmark_latest.json` | latest latency 写入 `eval/results/benchmark_latest.json` | 输出 `status=ok`，`documents=93`，dense returned `5`，hybrid returned `5`，sources 均来自 `data\\attention_is_all_you_need.pdf` |
 
 Sprint 5 未测项：
 
@@ -106,7 +107,7 @@ Sprint 5 未测项：
 
 | 命令 | 结果 | 本地输出来源 |
 |---|---:|---|
-| `uv run python scripts/evaluate_retrieval.py --dataset eval/retrieval_qa.jsonl --docs-dir data --retrieval dense,hybrid --top-k 5 --embedding-backend hash` | dense Hit@5 / question Recall@5 `0.75` (`15/20`)，MRR@5 `0.5574999999999999`；hybrid Hit@5 / question Recall@5 `1.0` (`20/20`)，MRR@5 `0.7791666666666667` | 输出 `status=ok`，`dataset_examples=20`，`documents=93`，dense latency `0.06234089999998105s`，hybrid latency `0.010229800000161049s` |
+| `uv run python scripts/evaluate_retrieval.py --dataset eval/retrieval_qa.jsonl --docs-dir data --retrieval dense,hybrid --top-k 5 --embedding-backend hash --output eval/results/retrieval_latest.json` | dense Hit@5 / question Recall@5 `0.75` (`15/20`)，MRR@5 `0.5574999999999999`；hybrid Hit@5 / question Recall@5 `1.0` (`20/20`)，MRR@5 `0.7791666666666667` | 输出 `status=ok`，`dataset_examples=20`，`documents=93`，latest latency 写入 `eval/results/retrieval_latest.json` |
 
 边界：这是 source/page 命中率，不是答案质量评估；只覆盖 `attention_is_all_you_need.pdf` 的 20 条本地标注问题；`hash` embedding 用于本地确定性评估，不代表 `bge-m3` 真实语义检索质量。
 
