@@ -79,7 +79,7 @@ graph TD
 - 💸 **成本治理**：复杂度判定 + 模型路由 + 真实 LLM synthesis + deterministic fallback，不把失败调用伪装成成功
 - 🔌 **MCP Server**：自研协议接口，可被 Claude Desktop / Cursor / Cline 直接调用
 - 📊 **LLMOps 本地安全边界**：Langfuse dry-run-safe 接入、本地 Docker Compose Langfuse trace/score smoke、RAGAS dry-run scaffold、业务指标和 Guardrails 防护（结构化输出 + 注入检测 + 引用强制）
-- ⚡ **企业知识库问答产品链路**：FastAPI REST/SSE、Streamlit 问答控制台、真实 OpenAI-compatible LLM synthesis、引用校验、反馈捕获、benchmark smoke、Docker Compose 本地全栈 smoke；云部署 / 100 QPS 压测保持手动或环境相关边界
+- ⚡ **企业知识库问答产品链路**：FastAPI REST/SSE、Streamlit 问答控制台、自动 session/trace、真实 OpenAI-compatible LLM synthesis、引用校验、反馈捕获、benchmark smoke、Docker Compose 本地全栈 smoke；云部署 / 100 QPS 压测保持手动或环境相关边界
 
 ## ✅ 实现状态边界
 
@@ -87,6 +87,7 @@ graph TD
 |---|---|---|
 | FastAPI `/api/v1/query` | 已接入 | graph-backed 查询入口 |
 | FastAPI `/api/v1/query/stream` | 已接入 | 有界 SSE wrapper，非 token-level LLM streaming |
+| Streamlit 问答入口 | 已接入 | 普通用户自动生成 session/trace；手动 trace/thread 覆盖已移入高级调试设置 |
 | `/api/v1/feedback` | 已接入 | 本地内存捕获；Docker Compose 本地 Langfuse score 已验证 |
 | PDF / Word / HTML ingest | 已接入 | 本地 loader + splitter，保留 source/page metadata |
 | FAISS dense retrieval | 已接入 | 默认本地可跑；测试默认使用 hash embedding |
@@ -128,7 +129,7 @@ cp .env.example .env  # 可选：填 API / Langfuse 配置；默认本地 fallba
 uv sync
 uv run python scripts/ingest_pdfs.py data          # 使用现有本地样本批量入库
 uv run uvicorn src.main:app --reload               # 启动 API
-uv run streamlit run frontend/app.py               # 启动 Sprint 5 demo UI
+uv run streamlit run frontend/app.py               # 启动本地知识库问答 UI
 ```
 
 ### Docker Compose 本地全栈 Smoke
@@ -207,6 +208,8 @@ uv run python scripts/smoke_external_interfaces.py --strict --include-container-
 | **Sprint 3** | W4 (6/8-6/14) | 混合范式 Agent 图 + MCP 工具层 | Done，本地 smoke |
 | **Sprint 4** | W5 (6/15-6/21) | Policy Layer + LLMOps | Done，本地 dry-run / smoke |
 | **Sprint 5** | W6 (6/22-6/30) | Streaming、feedback、demo、benchmark、docs、Docker Compose local smoke | 本地完成；Docker Compose + 本地 Langfuse trace/score 已验证；云部署、视频、申请为手动边界 |
+
+当前本地验证基线：`uv run pytest -q` 返回 `88 passed, 3 warnings`；`uv run ruff check src tests frontend\app.py` 返回 `All checks passed!`。warnings 来自 FAISS/SWIG 第三方类型。
 
 ## 📂 目录结构
 

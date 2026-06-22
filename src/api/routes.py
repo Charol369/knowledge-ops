@@ -30,16 +30,23 @@ from src.observability.metrics import business_metrics
 router = APIRouter()
 
 
+def _resolve_request_trace_id(req: QueryRequest, trace_id: str | None = None) -> str | None:
+    return trace_id or req.thread_id
+
+
 def _run_query(req: QueryRequest, trace_id: str | None = None) -> QueryResponse:
+    effective_trace_id = _resolve_request_trace_id(req, trace_id=trace_id)
     result = run_research_graph(
         question=req.question,
-        thread_id=trace_id or req.thread_id,
+        thread_id=effective_trace_id,
         docs_dir=req.docs_dir,
         index_dir=req.index_dir,
         artifact_root=req.artifact_root,
         embedding_backend=req.embedding_backend,
     )
-    return _query_result_to_response(result)
+    response = _query_result_to_response(result)
+    response.session_id = req.session_id or response.trace_id
+    return response
 
 
 def _query_result_to_response(result: dict) -> QueryResponse:
@@ -70,6 +77,7 @@ def _query_result_to_response(result: dict) -> QueryResponse:
         synthesis_status=result.get("synthesis_status"),
         synthesis_model=result.get("synthesis_model"),
         synthesis_blocked_reason=result.get("synthesis_blocked_reason"),
+        session_id=result.get("session_id") or result.get("trace_id"),
         artifact_session_id=result.get("artifact_session_id"),
         trace_id=result.get("trace_id"),
         needs_human_review=bool(result.get("needs_human_review", False)),
@@ -90,7 +98,7 @@ async def query(req: QueryRequest):
 @router.post("/query/stream")
 async def query_stream(req: QueryRequest):
     """SSE wrapper around the existing graph-backed query contract."""
-    trace_id = req.thread_id or uuid4().hex
+    trace_id = _resolve_request_trace_id(req) or uuid4().hex
 
     def event_stream():
         yield _sse_event(

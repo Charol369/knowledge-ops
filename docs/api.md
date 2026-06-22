@@ -38,7 +38,8 @@
 {
   "question": "Summarize the indexed evidence",
   "intent": null,
-  "thread_id": "demo-thread",
+  "session_id": "sess_local_ui",
+  "thread_id": null,
   "docs_dir": "data",
   "index_dir": "data/faiss/sprint1",
   "artifact_root": null,
@@ -59,11 +60,22 @@
     {"source": "data\\attention_is_all_you_need.pdf", "page": 1, "snippet": "..."}
   ],
   "model_tier_used": "tier2",
+  "session_id": "sess_local_ui",
   "artifact_session_id": "...",
-  "trace_id": "demo-thread",
+  "trace_id": "f1d2d2f924e986ac86fdf7b36c94bcdf",
   "needs_human_review": false
 }
 ```
+
+Session / trace behavior:
+
+| Field | Behavior |
+|---|---|
+| `session_id` | Product-facing optional session ID. The Streamlit UI auto-generates it and sends it with each query. |
+| `thread_id` | Backward-compatible debug override for old callers and manual graph trace isolation. Normal UI usage does not require it. |
+| neither provided | Backend generates a UUID request trace and returns it as both `trace_id` and a temporary `session_id` for that processed request. |
+| `session_id` provided | Backend keeps the product session ID and generates a separate per-request `trace_id`. |
+| both `session_id` and `thread_id` provided | `thread_id` wins as an explicit trace/debug override; `session_id` remains the product-facing session in the response. |
 
 ## `POST /api/v1/query/stream`
 
@@ -73,13 +85,13 @@
 
 ```text
 event: progress
-data: {"stage":"started","trace_id":"demo-thread","message":"Query accepted."}
+data: {"stage":"started","trace_id":"f1d2d2f924e986ac86fdf7b36c94bcdf","message":"Query accepted."}
 
 event: progress
-data: {"stage":"graph_completed","trace_id":"demo-thread","plan":[...],"citations_count":5,"artifact_session_id":"..."}
+data: {"stage":"graph_completed","trace_id":"f1d2d2f924e986ac86fdf7b36c94bcdf","plan":[...],"citations_count":5,"artifact_session_id":"..."}
 
 event: completion
-data: {"answer":"...","confidence":0.8,"plan":[...],"citations":[...],"trace_id":"demo-thread",...}
+data: {"answer":"...","confidence":0.8,"plan":[...],"citations":[...],"session_id":"sess_local_ui","trace_id":"f1d2d2f924e986ac86fdf7b36c94bcdf",...}
 ```
 
 边界：
@@ -94,10 +106,10 @@ data: {"answer":"...","confidence":0.8,"plan":[...],"citations":[...],"trace_id"
 
 ```json
 {
-  "trace_id": "demo-thread",
+  "trace_id": "f1d2d2f924e986ac86fdf7b36c94bcdf",
   "score": 1,
   "comment": "Useful answer.",
-  "source": "streamlit-demo",
+  "source": "streamlit-ui",
   "name": "user_feedback"
 }
 ```
@@ -117,7 +129,7 @@ data: {"answer":"...","confidence":0.8,"plan":[...],"citations":[...],"trace_id"
 ```json
 {
   "status": "ok",
-  "trace_id": "demo-thread",
+  "trace_id": "f1d2d2f924e986ac86fdf7b36c94bcdf",
   "score": 1.0,
   "storage": "local-memory",
   "langfuse_status": "disabled",

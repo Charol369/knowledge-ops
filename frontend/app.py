@@ -1,4 +1,4 @@
-"""Streamlit demo for the Sprint 5 KnowledgeOps research flow.
+"""Streamlit UI for the KnowledgeOps enterprise knowledge-base QA flow.
 
 Run:
   uv run streamlit run frontend/app.py
@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import os
 from typing import Any
+from uuid import uuid4
 
 import httpx
 import streamlit as st
@@ -15,11 +16,16 @@ import streamlit as st
 
 DEFAULT_API_BASE_URL = os.getenv("KNOWLEDGE_OPS_API_URL", "http://localhost:8000")
 REQUEST_TIMEOUT_SECONDS = 120.0
+SESSION_STATE_KEY = "knowledge_ops_session_id"
 
 
 def build_api_headers(api_key: str | None) -> dict[str, str]:
     key = (api_key or "").strip()
     return {"X-API-Key": key} if key else {}
+
+
+def create_session_id() -> str:
+    return f"sess_{uuid4().hex}"
 
 
 def parse_sse_events(payload: str) -> list[dict[str, Any]]:
@@ -79,7 +85,7 @@ def post_feedback(
     trace_id: str,
     score: float,
     comment: str | None,
-    source: str = "streamlit-demo",
+    source: str = "streamlit-ui",
     api_key: str | None = None,
 ) -> dict[str, Any]:
     url = f"{api_base_url.rstrip('/')}/api/v1/feedback"
@@ -148,12 +154,13 @@ def _render_query_result(result: dict[str, Any]) -> None:
     st.subheader("Final Answer")
     st.markdown(result.get("answer") or "_No answer returned._")
 
-    meta_columns = st.columns(5)
+    meta_columns = st.columns(6)
     meta_columns[0].metric("Confidence", f"{float(result.get('confidence', 0.0)):.2f}")
-    meta_columns[1].metric("Trace", result.get("trace_id") or "n/a")
-    meta_columns[2].metric("Session", result.get("artifact_session_id") or "n/a")
-    meta_columns[3].metric("Synthesis", result.get("synthesis_mode") or "n/a")
-    meta_columns[4].metric(
+    meta_columns[1].metric("Session", result.get("session_id") or "n/a")
+    meta_columns[2].metric("Trace", result.get("trace_id") or "n/a")
+    meta_columns[3].metric("Artifact", result.get("artifact_session_id") or "n/a")
+    meta_columns[4].metric("Synthesis", result.get("synthesis_mode") or "n/a")
+    meta_columns[5].metric(
         "Human Review",
         "yes" if result.get("needs_human_review") else "no",
     )
@@ -218,19 +225,21 @@ def _render_feedback(api_base_url: str, api_key: str | None, result: dict[str, A
 
 def main() -> None:
     st.set_page_config(
-        page_title="KnowledgeOps Demo",
+        page_title="KnowledgeOps",
         page_icon=None,
         layout="wide",
     )
     _apply_page_style()
+    if SESSION_STATE_KEY not in st.session_state:
+        st.session_state[SESSION_STATE_KEY] = create_session_id()
 
     st.markdown(
         """
         <div class="ko-hero">
-          <div class="ko-label">Sprint 5 Demo</div>
-          <h1>KnowledgeOps Research Console</h1>
-          <p>Submit a question to the FastAPI backend and inspect progress,
-          citations, trace metadata, and feedback capture.</p>
+          <div class="ko-label">Enterprise Knowledge QA</div>
+          <h1>KnowledgeOps Answer Console</h1>
+          <p>Ask questions against the indexed knowledge base and inspect
+          grounded answers, citations, trace metadata, and feedback capture.</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -240,38 +249,51 @@ def main() -> None:
         st.header("Backend")
         api_base_url = st.text_input("API base URL", value=DEFAULT_API_BASE_URL)
         api_key = st.text_input("API key", value="", type="password")
-        st.header("Local query settings")
-        docs_dir = st.text_input("docs_dir", value="data")
-        index_dir = st.text_input("index_dir", value="data/faiss/sprint1")
-        artifact_root = st.text_input("artifact_root", value="")
-        embedding_backend = st.selectbox(
-            "embedding_backend",
-            options=["hash", "fake", "local", "huggingface"],
-            index=0,
-        )
+        st.header("Session")
+        active_session_id = str(st.session_state[SESSION_STATE_KEY])
+        st.caption(f"Auto session: {active_session_id}")
+        if st.button("Start new session", type="secondary"):
+            st.session_state[SESSION_STATE_KEY] = create_session_id()
+            st.rerun()
+
+        with st.expander("Advanced local / debug settings", expanded=False):
+            manual_trace_id = st.text_input(
+                "Manual trace/thread override",
+                value="",
+                help="Optional. Leave blank to use the automatic product session.",
+            )
+            docs_dir = st.text_input("docs_dir", value="data")
+            index_dir = st.text_input("index_dir", value="data/faiss/sprint1")
+            artifact_root = st.text_input("artifact_root", value="")
+            embedding_backend = st.selectbox(
+                "embedding_backend",
+                options=["hash", "fake", "local", "huggingface"],
+                index=0,
+            )
 
     question = st.text_area(
         "Question",
-        value="Summarize the indexed evidence",
+        value="What is multi-head attention in Attention Is All You Need?",
         height=120,
     )
-    thread_id = st.text_input("Thread / trace ID", value="streamlit-demo-session")
 
-    if st.button("Run research", type="primary"):
+    if st.button("Ask knowledge base", type="primary"):
         if not question.strip():
             st.warning("Question is required.")
         else:
             payload: dict[str, Any] = {
                 "question": question.strip(),
-                "thread_id": thread_id.strip() or None,
+                "session_id": str(st.session_state[SESSION_STATE_KEY]),
                 "docs_dir": docs_dir,
                 "index_dir": index_dir,
                 "embedding_backend": embedding_backend,
             }
+            if manual_trace_id.strip():
+                payload["thread_id"] = manual_trace_id.strip()
             if artifact_root.strip():
                 payload["artifact_root"] = artifact_root.strip()
 
-            progress_panel = st.status("Calling /api/v1/query/stream", expanded=True)
+            progress_panel = st.status("Running knowledge query", expanded=True)
             try:
                 events = post_query_stream(
                     api_base_url=api_base_url,
@@ -302,7 +324,7 @@ def main() -> None:
                 progress_panel.update(label="No completion event returned", state="error")
             else:
                 st.session_state["last_response"] = completion
-                progress_panel.update(label="Research completed", state="complete")
+                progress_panel.update(label="Answer ready", state="complete")
 
     last_response = st.session_state.get("last_response")
     if isinstance(last_response, dict):

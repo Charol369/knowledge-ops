@@ -7,7 +7,14 @@ from pydantic import BaseModel, Field
 class QueryRequest(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
     intent: str | None = Field(default=None, description="可选：lookup/research/report，不传则由 policy layer 判定")
-    thread_id: str | None = Field(default=None, description="可选：会话 ID，用于隔离 graph checkpointer 与 artifact session")
+    session_id: str | None = Field(
+        default=None,
+        description="可选：产品侧会话 ID；正常 UI 自动生成，独立于单次请求 trace。",
+    )
+    thread_id: str | None = Field(
+        default=None,
+        description="可选：兼容旧调用/调试覆盖；正常 UI 不需要用户手动填写。",
+    )
     docs_dir: str = Field(default="data", description="Sprint 3 local documents directory.")
     index_dir: str = Field(default="data/faiss/sprint1", description="Sprint 3 local FAISS index directory.")
     artifact_root: str | None = Field(default=None, description="Optional Sprint 3 artifact root directory.")
@@ -39,6 +46,7 @@ class QueryResponse(BaseModel):
     synthesis_status: str | None = None
     synthesis_model: str | None = None
     synthesis_blocked_reason: str | None = None
+    session_id: str | None = None
     artifact_session_id: str | None = None
     trace_id: str | None = None
     needs_human_review: bool = False

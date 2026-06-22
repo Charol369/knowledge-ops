@@ -8,17 +8,17 @@ Updated: 2026-06-22
 
 KnowledgeOps has completed the Sprint 1-5 local delivery baseline and has been pushed to GitHub.
 
-Previous pushed verification commit:
+Latest pushed baseline commit before the current automatic session/trace round:
 
 ```text
-278e102 chore: verify docker compose langfuse stack
+c4891b5 feat: add llm-backed product qa baseline
 ```
 
 Verified local baseline:
 
 ```text
 uv run pytest -q
-# 77 passed, 3 warnings
+# 88 passed, 3 warnings
 ```
 
 External interface smoke:
@@ -44,7 +44,7 @@ Implemented and locally verified:
 - Sprint 2: BM25, RRF hybrid retrieval, rerank boundary, query transforms, Context Builder, RAGAS dry-run scaffold, benchmark smoke.
 - Sprint 3: LangGraph research graph, graph-backed `/api/v1/query`, citation validation, structured output validation, MCP tool/resource layer.
 - Sprint 4: policy routing, cache/retry/fallback, guardrails, trace_id, business metrics, Langfuse dry-run safe path, auth, rate limit, optional memory boundary.
-- Sprint 5: `/api/v1/query/stream`, `/api/v1/feedback`, Streamlit demo, feedback capture, final docs, delivery boundary, benchmark smoke, Docker Compose local stack smoke, local Langfuse trace/score smoke, external interface smoke artifact.
+- Sprint 5: `/api/v1/query/stream`, `/api/v1/feedback`, Streamlit knowledge QA UI, automatic session/trace, feedback capture, final docs, delivery boundary, benchmark smoke, Docker Compose local stack smoke, local Langfuse trace/score smoke, external interface smoke artifact.
 - Portfolio hardening: CI workflow has been supplemented with ruff, py_compile, FastAPI import smoke, and pytest; local equivalent commands passed. GitHub Actions run `27943394914` passed, so the README CI badge is evidence-backed.
 - Demo dry run: bounded local Streamlit page load, SSE query path, and feedback path passed; see `docs/demo-dry-run.md`.
 
@@ -65,7 +65,7 @@ Do not add new KnowledgeOps features until the project has been converted into a
 
 The next work is not another implementation Sprint. It is portfolio hardening:
 
-1. Keep status documents aligned with real command output: `77 passed`, Docker Compose local Langfuse trace/score smoke, external interface smoke artifact, and 20-case hybrid `1.0` retrieval result.
+1. Keep status documents aligned with real command output: `88 passed`, Docker Compose local Langfuse trace/score smoke, external interface smoke artifact, and 20-case hybrid `1.0` retrieval result.
 2. Add implementation-boundary tables to README and architecture docs.
 3. Persist benchmark/eval outputs with `--output`.
 4. Keep query transform and rerank as optional config-gated enhancements.
@@ -145,10 +145,10 @@ Goal: create a truthful project description that matches actual evidence.
 Safe claims:
 
 - Built a FastAPI + LangGraph research-oriented Knowledge Agent that runs a `plan -> retrieve -> synthesize -> report -> verify` workflow.
-- Implemented local document ingestion, FAISS dense retrieval, BM25 + RRF hybrid retrieval, context construction, artifact persistence, citation validation, MCP tools, auth/rate limiting, SSE streaming, feedback capture, and Streamlit demo.
+- Implemented local document ingestion, FAISS dense retrieval, BM25 + RRF hybrid retrieval, context construction, artifact persistence, citation validation, MCP tools, auth/rate limiting, SSE streaming, automatic session/trace, feedback capture, and Streamlit knowledge QA UI.
 - Added deterministic local fallback paths so smoke tests do not require paid external models or real credentials.
 - Maintained explicit delivery boundaries for Docker, cloud deployment, QPS, RAGAS, Recall@5, and cost metrics.
-- Verified local behavior with `77` tests passing.
+- Verified local behavior with `88` tests passing.
 - Measured 20 local source/page labeled retrieval cases: dense Hit@5 / Recall@5 `0.75`, hybrid Hit@5 / Recall@5 `1.0`.
 
 Unsafe claims until measured:

@@ -73,6 +73,38 @@ def test_query_stream_emits_ordered_progress_and_completion_events(tmp_path: Pat
     assert completion["needs_human_review"] is False
 
 
+def test_query_stream_accepts_product_session_id(tmp_path: Path):
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    (docs_dir / "sample.html").write_text(
+        "<body><p>Streaming session evidence cites this local document.</p></body>",
+        encoding="utf-8",
+    )
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/v1/query/stream",
+        json={
+            "question": "What evidence does this session cite?",
+            "session_id": "sess-stream-test",
+            "docs_dir": str(docs_dir),
+            "index_dir": str(tmp_path / "index"),
+            "artifact_root": str(tmp_path / "artifacts"),
+        },
+    )
+
+    assert response.status_code == 200
+    events = _parse_sse_events(response.text)
+    started = json.loads(events[0]["data"])
+    completion = json.loads(events[2]["data"])
+
+    assert started["trace_id"]
+    assert started["trace_id"] != "sess-stream-test"
+    assert completion["session_id"] == "sess-stream-test"
+    assert completion["trace_id"] == started["trace_id"]
+    assert completion["artifact_session_id"]
+
+
 def test_query_stream_reuses_sprint4_api_key_protection():
     previous_auth = app.state.api_auth_enabled
     previous_key = app.state.api_key

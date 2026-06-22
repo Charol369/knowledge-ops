@@ -19,9 +19,9 @@ Use these facts in resumes, interviews, README summaries, and demo scripts.
 - Implemented graph-backed `/api/v1/query`, SSE `/api/v1/query/stream`, local `/api/v1/feedback`, and `/api/v1/ingest`.
 - Implemented API key authentication, local in-memory rate limiting, guardrails, Unicode normalization, prompt-injection detection, model routing, cache/retry/fallback primitives, and business metrics.
 - Implemented MCP tool/resource layer for local retrieval and summarization services.
-- Implemented Streamlit demo that calls the backend API and displays progress, plan, answer, citations, trace/session metadata, and feedback.
+- Implemented a Streamlit knowledge-base QA UI that calls the backend API, auto-generates product sessions/traces, keeps manual trace overrides in advanced/debug settings, and displays progress, plan, answer, citations, trace/session metadata, and feedback.
 - Added explicit LLM synthesis and deterministic fallback boundaries so tests do not require paid external models, while product runtime can use the configured OpenAI-compatible provider.
-- Verified the current local baseline with `77` passing tests and `3` third-party warnings.
+- Verified the current local baseline with `88` passing tests and `3` third-party warnings.
 - Measured a small 20-case local source/page retrieval set: dense Hit@5 / Recall@5 `0.75`, hybrid Hit@5 / Recall@5 `1.0`. This is not RAGAS or end-to-end answer-quality evaluation.
 - Verified local Docker Compose full-stack smoke on 2026-06-22: app, Milvus, Langfuse web/worker, ClickHouse, Postgres, Redis, and MinIO started locally.
 - Verified local Langfuse trace/score smoke on 2026-06-22: query trace and feedback score landed in ClickHouse under the same deterministic Langfuse trace id.
@@ -51,9 +51,9 @@ Use this version when one project needs 3-4 lines.
 ```text
 KnowledgeOps - 生产导向研究型 Knowledge Agent 系统
 - 基于 FastAPI + LangGraph 构建研究型 Knowledge Agent，将复杂问题拆成 plan -> retrieve -> synthesize -> report -> verify 工作流，避免把检索、引用校验、评估等确定性链路全部 agent 化。
-- 实现 PDF/Word/HTML 本地入库、FAISS dense retrieval、BM25 + RRF hybrid retrieval、Context Builder、artifact persistence、citation validation、MCP tool/resource layer，并提供 REST/SSE 查询与 Streamlit demo。
+- 实现 PDF/Word/HTML 本地入库、FAISS dense retrieval、BM25 + RRF hybrid retrieval、Context Builder、artifact persistence、citation validation、MCP tool/resource layer，并提供 REST/SSE 查询与 Streamlit 知识库问答 UI。
 - 加入模型路由、cache/retry/fallback、API key auth、in-memory rate limit、prompt-injection guardrails、Unicode normalization、business metrics、Langfuse dry-run-safe 接入与本地 Docker Compose trace/score 验证。
-- 使用 pytest 覆盖 ingestion、retrieval、graph/API/MCP、policy、guardrails、observability、streaming、feedback、demo helper 与 external smoke helper，当前本地验证 77 tests passed；20 条本地 source/page 标注集上 hybrid Hit@5 / Recall@5 为 1.0；Docker Compose 本地 Langfuse trace/score smoke 已通过；RAGAS/QPS/P95/真实成本仍保留为待真实环境验证项。
+- 使用 pytest 覆盖 ingestion、retrieval、graph/API/MCP、policy、guardrails、observability、streaming、feedback、UI helper 与 external smoke helper，当前本地验证 88 tests passed；20 条本地 source/page 标注集上 hybrid Hit@5 / Recall@5 为 1.0；Docker Compose 本地 Langfuse trace/score smoke 已通过；RAGAS/QPS/P95/真实成本仍保留为待真实环境验证项。
 ```
 
 ## Short Resume Version
@@ -61,7 +61,7 @@ KnowledgeOps - 生产导向研究型 Knowledge Agent 系统
 Use this version when space is tight.
 
 ```text
-KnowledgeOps - 研究型 Knowledge Agent：基于 FastAPI + LangGraph 实现 plan -> retrieve -> synthesize -> report -> verify 工作流，集成 hybrid retrieval、Context Builder、citation validation、MCP、SSE streaming、feedback、auth/rate limit、guardrails、Streamlit demo 和 Docker Compose 本地 Langfuse trace/score smoke；本地 pytest 77 tests passed，20 条本地 source/page 标注集上 hybrid Hit@5 / Recall@5 为 1.0，指标边界按真实 benchmark/smoke 输出记录。
+KnowledgeOps - 研究型 Knowledge Agent：基于 FastAPI + LangGraph 实现 plan -> retrieve -> synthesize -> report -> verify 工作流，集成 hybrid retrieval、Context Builder、citation validation、MCP、SSE streaming、feedback、auth/rate limit、guardrails、自动 session/trace、Streamlit 知识库问答 UI 和 Docker Compose 本地 Langfuse trace/score smoke；本地 pytest 88 tests passed，20 条本地 source/page 标注集上 hybrid Hit@5 / Recall@5 为 1.0，指标边界按真实 benchmark/smoke 输出记录。
 ```
 
 ## 5-Minute Project Explanation
@@ -145,10 +145,10 @@ LangGraph graph 使用固定研究流程，不是教学式的泛 Agent demo。
 - SSE `/api/v1/query/stream`；
 - `/api/v1/feedback` 本地捕获；
 - Docker Compose 本地 Langfuse trace/score；
-- Streamlit demo 展示 question、progress、plan、answer、citations、trace/session 和 feedback；
+- Streamlit 知识库问答 UI 展示 question、progress、plan、answer、citations、trace/session 和 feedback；普通用户不需要手动填写 trace ID；
 - MCP server 暴露 retrieval/summarization 能力。
 
-当前本地验证是 `77 tests passed`，benchmark smoke 能跑 dense/hybrid retrieval 并返回 top-5 evidence。当前 20 条本地 source/page 标注集上 dense Hit@5 / Recall@5 为 `0.75`，hybrid Hit@5 / Recall@5 为 `1.0`。
+当前本地验证是 `88 tests passed`，benchmark smoke 能跑 dense/hybrid retrieval 并返回 top-5 evidence。当前 20 条本地 source/page 标注集上 dense Hit@5 / Recall@5 为 `0.75`，hybrid Hit@5 / Recall@5 为 `1.0`。
 
 但我不会声称生产 Recall@5、RAGAS、P95、QPS 或成本已经达标，因为这些需要更大标注集、真实模型/观测配置、真实评估命令和压测环境。
 
@@ -182,7 +182,7 @@ MCP exposes retrieval and summarization capabilities as standard tools/resources
 
 Measured:
 
-- local tests: `77 passed`;
+- local tests: `88 passed, 3 warnings`;
 - benchmark smoke: dense/hybrid top-5 retrieval returns evidence from local data;
 - small local retrieval eval: dense Hit@5 / Recall@5 `0.75`, hybrid Hit@5 / Recall@5 `1.0` on 20 source/page labeled cases;
 - local API/Streamlit/feedback/streaming smoke.

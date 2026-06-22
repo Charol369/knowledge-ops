@@ -121,6 +121,7 @@ graph TD
 | `planner -> retrieval_orchestrator -> synthesizer -> reporter -> verifier` | 已接入主链路 | 固定 LangGraph 流程，不是自由游走的多 Agent |
 | `/api/v1/query` | 已接入主链路 | 调用 graph-backed 查询 |
 | `/api/v1/query/stream` | 已接入主链路 | 有界 SSE wrapper，复用 query 合约 |
+| Streamlit 知识库问答 UI | 已接入主链路 | 自动生成产品 `session_id`；手动 `thread_id` 仅保留在高级调试设置 |
 | `/api/v1/feedback` | 已接入主链路 | 本地指标记录；Docker Compose 本地 Langfuse score 已验证 |
 | FAISS dense retrieval | 已接入主链路 | 默认本地 smoke 使用 hash embedding |
 | BM25 sparse retrieval | 已接入主链路 | 关键词/术语召回补充 |

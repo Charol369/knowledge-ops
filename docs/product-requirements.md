@@ -25,13 +25,14 @@ KnowledgeOps 的下一阶段目标是从单路径 RAG 问答升级为真实企�
 |---|---|---|
 | API | FastAPI `/api/v1/query` 和 `/api/v1/query/stream` 已接入 graph | integration tests |
 | LLM synthesis | OpenAI-compatible `deepseek-v4-pro` 已进入主查询 synthesis 链路 | API smoke 返回 `synthesis_mode=llm` / `synthesis_status=ok` |
+| Session / trace | 正常 UI 自动生成 `session_id`；API 每次请求自动生成 `trace_id`，并保留 `thread_id` 作为兼容/调试覆盖 | `tests/integration/test_query_api.py` / `tests/integration/test_streaming.py` |
 | Retrieval | FAISS/hash dense + BM25 + RRF hybrid retrieval | unit/integration tests |
 | Citation | answer citation extraction + verifier | unit tests |
 | Fallback | LLM synthesis 失败时 deterministic fallback | graph state / tests |
 | Feedback | `/api/v1/feedback` + 本地 Langfuse score smoke | docs/docker-compose-smoke.md |
 | Docker local stack | app + Milvus + Langfuse + ClickHouse + Postgres + Redis + MinIO 本地 smoke | docs/docker-compose-smoke.md |
 | CI | GitHub Actions green | README badge / Actions run |
-| Tests | 当前本地测试通过 | `84 passed, 3 warnings` |
+| Tests | 当前本地测试通过 | `88 passed, 3 warnings` |
 
 当前不能声明为已完成：
 
@@ -194,7 +195,7 @@ Acceptance:
 | P0-R2 | Intent-aware graph routing | graph chooses retrieval/tool strategy based on intent |
 | P0-R3 | Reference count tool | count references deterministically or return precise blocked reason |
 | P0-R4 | Section lookup tool | locate section by heading/number and return evidence |
-| P0-R5 | Automatic session/trace | normal users do not manually enter trace ID |
+| P0-R5 | Automatic session/trace | 已完成：normal UI 自动生成 `session_id`；API 自动生成单次请求 `trace_id`；旧 `thread_id` 仅作为调试覆盖 |
 | P0-R6 | API diagnostics | response includes `intent`, `strategy`, `tool_status`, `fallback_reason` |
 | P0-R7 | LLM synthesis stability | structured output + local citation rendering; fallback reason surfaced |
 | P0-R8 | Regression tests | tests for core intents and fallback |
@@ -273,7 +274,7 @@ P0 is complete only when all are true:
 - `docs/product-requirements.md`, `docs/product-workflows.md`, `docs/product-api-contract.md`, and `docs/product-data-model.md` are present.
 - Query intent and strategy are returned by `/api/v1/query`.
 - `definition` and `count` workflows are implemented and tested.
-- Normal UI does not require manual trace ID entry.
+- Normal UI does not require manual trace ID entry. 已完成；手动 trace/thread 覆盖只保留在高级调试设置。
 - LLM answer path returns `synthesis_mode=llm` under a healthy provider.
 - Fallback path returns a visible `fallback_reason`.
 - Regression tests pass locally.

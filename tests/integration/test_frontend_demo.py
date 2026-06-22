@@ -27,3 +27,10 @@ def test_demo_builds_api_key_header_only_when_configured():
     assert frontend_app.build_api_headers("") == {}
     assert frontend_app.build_api_headers("  ") == {}
     assert frontend_app.build_api_headers("secret") == {"X-API-Key": "secret"}
+
+
+def test_ui_generates_product_session_id():
+    session_id = frontend_app.create_session_id()
+
+    assert session_id.startswith("sess_")
+    assert len(session_id) == 37

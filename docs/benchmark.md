@@ -85,7 +85,7 @@ Sprint 4 smoke 只验证本地可测试的 policy、guardrails、observability d
 |---|---:|---|
 | `uv run pytest tests/integration/test_streaming.py` | `2 passed, 3 warnings` | `/api/v1/query/stream` 返回有序 SSE `progress/progress/completion`，并继承 Sprint 4 API key 保护；warnings 来自 FAISS/SWIG 第三方类型 |
 | `uv run pytest tests/integration/test_feedback.py` | `2 passed` | `/api/v1/feedback` 本地捕获 score/comment/source；默认 Langfuse disabled 时返回明确配置状态 |
-| `uv run pytest tests/integration/test_frontend_demo.py` | `2 passed` | Streamlit demo 的 SSE parser 与 API key header helper 可导入测试 |
+| `uv run pytest tests/integration/test_frontend_demo.py` | `3 passed` | Streamlit UI 的 SSE parser、API key header helper、自动 product session id helper 可导入测试 |
 | `uv run python -m py_compile frontend/app.py` | passed | Demo UI 文件语法检查通过 |
 | `uv run python -c "import streamlit; print(streamlit.__version__)"` | `1.57.0` | Sprint 5 唯一新增直接依赖可导入 |
 | `uv run python scripts/benchmark.py --retrieval dense,hybrid --top-k 5 --output eval/results/benchmark_latest.json` | latest latency 写入 `eval/results/benchmark_latest.json` | 输出 `status=ok`，`documents=93`，dense returned `5`，hybrid returned `5`，sources 均来自 `data\\attention_is_all_you_need.pdf` |

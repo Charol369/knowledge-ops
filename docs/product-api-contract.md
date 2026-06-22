@@ -136,7 +136,8 @@ Current compatibility fields:
 
 | Current field | Keep? | Target migration |
 |---|---:|---|
-| `thread_id` | temporary | replace normal UI usage with `session_id`; keep API backward compatibility |
+| `session_id` | yes | implemented as product-facing conversation/session id |
+| `thread_id` | temporary | keep as backward-compatible trace/debug override; normal UI does not use it |
 | `docs_dir` | dev only | move under options/admin context |
 | `index_dir` | dev only | move under options/admin context |
 | `embedding_backend` | dev only | move under options |
@@ -432,11 +433,12 @@ This endpoint should require admin/API key access.
 
 | Current field/endpoint | Target |
 |---|---|
-| `thread_id` | keep as alias for `session_id` during transition |
+| `session_id` | product-facing session field; Streamlit UI auto-generates it |
+| `thread_id` | keep only as backward-compatible trace/debug override |
 | `docs_dir` | dev/admin option only |
 | `index_dir` | dev/admin option only |
 | `/api/v1/ingest` | keep local compatibility; add `/api/v1/documents/ingest` |
-| Streamlit manual trace field | move to advanced/debug panel |
+| Streamlit manual trace field | completed: moved to advanced/debug panel |
 
 ## 10. Review Questions
 
@@ -453,5 +455,5 @@ P0 API work is complete when:
 - `/api/v1/query` returns `intent` and `strategy`.
 - `/api/v1/query` returns `synthesis_blocked_reason` when fallback happens.
 - `/api/v1/query/stream` emits at least started/graph_completed/completion with the expanded response.
-- Normal UI no longer requires manual trace ID.
+- Normal UI no longer requires manual trace ID. Completed for the current Streamlit UI.
 - Existing tests pass and new API schema tests cover intent/tool/fallback fields.

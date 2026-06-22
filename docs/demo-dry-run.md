@@ -2,7 +2,15 @@
 
 Date: 2026-06-22
 
-This document records the bounded local demo dry run that was actually executed. It verifies that the Streamlit demo can load locally and that the demo's backend query/feedback path works against the current local Docker API. It does not claim that a public demo video was recorded or uploaded.
+This document records the bounded local demo dry run that was actually executed. It verifies that the Streamlit UI can load locally and that the backend query/feedback path works against the current local Docker API. It does not claim that a public demo video was recorded or uploaded.
+
+Current UI note:
+
+```text
+The current Streamlit knowledge QA UI auto-generates a product session_id.
+Manual thread/trace override remains available only in the advanced/debug settings.
+The fixed thread_id below is historical dry-run evidence, not the normal user flow.
+```
 
 ## Environment
 
@@ -13,7 +21,7 @@ This document records the bounded local demo dry run that was actually executed.
 | Streamlit URL | `http://localhost:8501` |
 | Streamlit command | `uv run streamlit run frontend/app.py --server.headless true --server.port 8501 --browser.gatherUsageStats false` |
 | Query | `Summarize the indexed evidence` |
-| Thread / trace id | `demo-dry-run-20260622` |
+| Thread / trace id | `demo-dry-run-20260622` historical smoke override; current normal UI auto-generates session/trace |
 | Embedding backend | `hash` |
 
 ## Checks

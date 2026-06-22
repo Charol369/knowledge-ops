@@ -8,7 +8,7 @@
 |---|---|---|
 | `/api/v1/query/stream` | 已实现 | `uv run pytest tests/integration/test_streaming.py` |
 | `/api/v1/feedback` | 已实现 | `uv run pytest tests/integration/test_feedback.py` |
-| Streamlit demo | 已实现 | `uv run pytest tests/integration/test_frontend_demo.py`，`uv run python -m py_compile frontend/app.py` |
+| Streamlit knowledge QA UI | 已实现 | 普通用户自动 session/trace；手动 trace/thread 覆盖在高级调试设置；`uv run pytest tests/integration/test_frontend_demo.py`，`uv run python -m py_compile frontend/app.py` |
 | Final benchmark smoke | 已执行 | `uv run python scripts/benchmark.py --retrieval dense,hybrid --top-k 5 --output eval/results/benchmark_latest.json` |
 | Small retrieval eval | 已执行 | `uv run python scripts/evaluate_retrieval.py --dataset eval/retrieval_qa.jsonl --docs-dir data --retrieval dense,hybrid --top-k 5 --embedding-backend hash --output eval/results/retrieval_latest.json` |
 | Docker Compose full-stack smoke | 已执行 | `docker compose up -d --build`；`app`、Milvus、Langfuse、ClickHouse、Postgres、Redis、MinIO 均启动，见 `docs/docker-compose-smoke.md` |
@@ -49,7 +49,7 @@
 可安全引用的事实：
 
 - 构建了 FastAPI + LangGraph 的研究型 Knowledge Agent，本地支持 `plan -> retrieve -> synthesize -> report -> verify`。
-- 实现了 REST 查询、SSE streaming 查询、反馈捕获、API key 认证、本地 rate limit 和 Streamlit demo。
+- 实现了 REST 查询、SSE streaming 查询、自动 session/trace、反馈捕获、API key 认证、本地 rate limit 和 Streamlit 知识库问答 UI。
 - 支持本地 FAISS/hash embedding smoke、MCP server 接入路径、Docker Compose 本地 Langfuse trace/score smoke。
 - Sprint 5 本地 benchmark smoke 返回 `status=ok`、`documents=93`，dense / hybrid 均返回 5 条候选，最新输出可保存到 `eval/results/benchmark_latest.json`。
 - 20 条本地 source/page 标注集上 dense Hit@5 / Recall@5 为 `0.75`，hybrid Hit@5 / Recall@5 为 `1.0`，最新输出可保存到 `eval/results/retrieval_latest.json`。
