@@ -3,7 +3,6 @@ import math
 import re
 
 from langchain_core.embeddings import Embeddings
-from langchain_huggingface import HuggingFaceEmbeddings
 
 from src.config import settings
 
@@ -38,6 +37,8 @@ def get_embedder(model_name: str | None = None, backend: str = "huggingface") ->
     """统一的 embedder 入口；默认仍优先使用配置中的 bge-m3。"""
     if backend in {"local", "fake", "hash"}:
         return LocalHashEmbeddings()
+    from langchain_huggingface import HuggingFaceEmbeddings
+
     return HuggingFaceEmbeddings(
         model_name=model_name or settings.embed_model,
         encode_kwargs={"normalize_embeddings": True},

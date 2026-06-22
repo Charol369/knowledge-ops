@@ -96,7 +96,7 @@ Sprint 5 未测项：
 - RAGAS：脚本输出 `pending_real_run`，未运行真实 RAGAS 指标。
 - QPS / P95：脚本输出 `pending_load_test`，未运行 Locust 100 QPS x 5min。
 - 单 query 成本：本地 hash embedding / deterministic fallback smoke 不产生真实 LLM 计费数据。
-- Docker Compose 全量联调：未在本次本地 Sprint 5 验证中启动，保持手动/环境相关边界。
+- Docker Compose 全量联调：已在 2026-06-22 单独执行并记录，见下方 Docker Compose + Langfuse smoke 小节。
 - Cloud deployment、demo video、resume finalization、job applications：非代码自动化交付，不能声明为已自动完成。
 
 ## Sprint 5 小规模 Retrieval Hit@5 / Recall@5
@@ -111,10 +111,53 @@ Sprint 5 未测项：
 
 边界：这是 source/page 命中率，不是答案质量评估；只覆盖 `attention_is_all_you_need.pdf` 的 20 条本地标注问题；`hash` embedding 用于本地确定性评估，不代表 `bge-m3` 真实语义检索质量。
 
+## Docker Compose + Local Langfuse Smoke
+
+测试日期：2026-06-22
+
+测试环境：Windows 本地开发环境，Docker `29.4.3`，Docker Desktop `4.73.0`，Docker Compose `v5.1.3`。
+
+| 命令 / 检查 | 结果 | 本地输出来源 |
+|---|---:|---|
+| `docker compose up -d --build` | passed | `app`、Milvus、Langfuse web/worker、ClickHouse、Postgres、Redis、MinIO 均启动 |
+| `docker compose ps` | all required services up | `app`、Milvus、ClickHouse、Postgres、Redis、MinIO 显示 healthy；Langfuse web/worker 显示 up |
+| `Invoke-WebRequest http://localhost:8000/health` | `200` | `{"status":"ok","version":"0.0.1"}` |
+| `Invoke-WebRequest http://localhost:3000` | `200` | Langfuse web HTML returned |
+| `Invoke-WebRequest http://localhost:9092/healthz` | `200` | Milvus health endpoint returned `OK` |
+| POST `/api/v1/query` | `200` | 返回 confidence `0.85`、5 条 citations、artifact session `20260622T065008Z-7380c05d` |
+| POST `/api/v1/feedback` | `200` | `langfuse_status=recorded` |
+| POST `/api/v1/query/stream` | passed | SSE 顺序为 `progress -> progress -> completion`，artifact session `20260622T065503Z-d21505ba` |
+| ClickHouse `traces` | trace found | Langfuse trace id `54c7f956ce5e27e7daf5fd007adc051e` |
+| ClickHouse `scores` | score found | score trace id 同为 `54c7f956ce5e27e7daf5fd007adc051e`，score value `1` |
+
+本次 Docker smoke 修复了 4 个环境集成问题：
+
+- `ENCRYPTION_KEY` 必须以字符串传给 Langfuse v3 worker，否则会被拒绝。
+- Windows bind mount 会导致 ClickHouse `Permission denied`，ClickHouse 数据和日志改为 Docker named volumes。
+- Docker app 镜像使用 lightweight 依赖和 lazy HuggingFace import，避免默认安装 Torch/CUDA 大包。
+- Langfuse callback trace id 与 feedback score trace id 已通过 deterministic 32-hex mapping 对齐。
+
+详细证据见 `docs/docker-compose-smoke.md`。
+
+## Paid API Smoke
+
+测试日期：2026-06-22
+
+当前 `.env` 中 OpenAI-compatible API key/base URL 可被 Docker app 读取，外部 endpoint 可返回模型列表。结论如下：
+
+| 检查 | 结果 |
+|---|---|
+| `models.list()` | passed，返回 17 个模型 |
+| `deepseek-v4-pro` | failed，外部渠道返回 `model_not_found` |
+| `deepseek-chat` | failed，外部渠道返回 `model_not_found` |
+| `glm-4.7-flash` | passed，最小请求返回 `ok` |
+
+边界：这只能证明当前 OpenAI-compatible 付费渠道可调用，不证明真实 DeepSeek 已接通。DeepSeek 相关 claim 仍需等渠道开放 `deepseek-*` 模型或切到官方 DeepSeek endpoint 后重新验证。
+
 ## 测试环境（计划）
 
 - 单机 Docker：1 实例 KnowledgeOps + 1 Milvus standalone + 1 Langfuse
-- LLM：DeepSeek API
+- LLM：DeepSeek API 为目标路径；当前仅验证 OpenAI-compatible 付费渠道有其他可调用模型，DeepSeek 渠道未通过
 - 嵌入：bge-m3（CPU）
 - 测试集：100 条 QA pair（covering FAQ / 知识库 / 闲聊 / 注入攻击）
 

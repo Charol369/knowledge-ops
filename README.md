@@ -77,8 +77,8 @@ graph TD
 - 🧱 **认知链路 Agent 化，执行链路服务化**：检索 / 重排 / 引用校验 / 评估保持 deterministic services
 - 💸 **成本治理**：复杂度判定 + 模型路由 + 缓存 / fallback，不默认把所有请求打到最高价模型
 - 🔌 **MCP Server**：自研协议接口，可被 Claude Desktop / Cursor / Cline 直接调用
-- 📊 **LLMOps 本地安全边界**：Langfuse dry-run-safe 接入、RAGAS dry-run scaffold、业务指标和 Guardrails 防护（结构化输出 + 注入检测 + 引用强制）
-- ⚡ **本地可演示交付**：FastAPI REST/SSE、Streamlit demo、反馈捕获、benchmark smoke；Docker / 云部署 / 100 QPS 压测保持手动或环境相关边界
+- 📊 **LLMOps 本地安全边界**：Langfuse dry-run-safe 接入、本地 Docker Compose Langfuse trace/score smoke、RAGAS dry-run scaffold、业务指标和 Guardrails 防护（结构化输出 + 注入检测 + 引用强制）
+- ⚡ **本地可演示交付**：FastAPI REST/SSE、Streamlit demo、反馈捕获、benchmark smoke、Docker Compose 本地全栈 smoke；云部署 / 100 QPS 压测保持手动或环境相关边界
 
 ## ✅ 实现状态边界
 
@@ -86,7 +86,7 @@ graph TD
 |---|---|---|
 | FastAPI `/api/v1/query` | 已接入 | graph-backed 查询入口 |
 | FastAPI `/api/v1/query/stream` | 已接入 | 有界 SSE wrapper，非 token-level LLM streaming |
-| `/api/v1/feedback` | 已接入 | 本地内存捕获，Langfuse 配置完整时可转发 score |
+| `/api/v1/feedback` | 已接入 | 本地内存捕获；Docker Compose 本地 Langfuse score 已验证 |
 | PDF / Word / HTML ingest | 已接入 | 本地 loader + splitter，保留 source/page metadata |
 | FAISS dense retrieval | 已接入 | 默认本地可跑；测试默认使用 hash embedding |
 | BM25 sparse retrieval | 已接入 | `rank-bm25` 本地稀疏检索 |
@@ -96,9 +96,10 @@ graph TD
 | MCP Server | 已实现并测试 | stdio server；外部 MCP client 接入属于手动验证 |
 | Query Transform | 已实现，默认关闭 | `QUERY_TRANSFORM_ENABLED=false`；开启后扩展候选查询 |
 | Cross-Encoder Rerank | 已实现，默认关闭 | `RERANK_ENABLED=false`；本地模型缺失时回退，不伪造 rerank 分数 |
-| Langfuse | dry-run / optional | 默认 `LANGFUSE_ENABLED=false`，未声明真实 dashboard trace |
+| Langfuse | 已接入，本地 Compose 已验证 | 默认 `.env.example` disabled；Docker Compose 中本地 trace/score 已验证，见 `docs/docker-compose-smoke.md` |
 | RAGAS | dry-run scaffold | 未运行真实 RAGAS 指标 |
-| Docker Compose | manual boundary | 配置存在，当前 README 不声明全量联调已完成 |
+| Docker Compose | 已完成本地全量联调 | `app + Milvus + Langfuse web/worker + ClickHouse + Postgres + Redis + MinIO` 已本机 smoke |
+| Paid OpenAI-compatible API | 已验证可调用，不默认接入主链路 | 当前渠道可列模型并用 `glm-4.7-flash` 返回 `ok`；`deepseek-v4-pro` / `deepseek-chat` 未在渠道中可用 |
 | Locust / 100 QPS | manual boundary | 脚本存在，未运行 100 QPS x 5min |
 | Cloud deployment | manual boundary | 未声明公网部署完成 |
 
@@ -128,17 +129,17 @@ uv run uvicorn src.main:app --reload               # 启动 API
 uv run streamlit run frontend/app.py               # 启动 Sprint 5 demo UI
 ```
 
-### Docker Compose 边界
+### Docker Compose 本地全栈 Smoke
 
 ```powershell
-docker compose up -d  # 手动启动 Milvus standalone + Langfuse + 应用
+docker compose up -d --build  # 启动 Milvus standalone + Langfuse + 应用
 # 访问：
 #   API           http://localhost:8000
 #   Langfuse UI   http://localhost:3000
 #   Milvus        http://localhost:19530
 ```
 
-当前 README 不声明 Docker Compose、云部署或 100 QPS 压测已经在本机自动验证；这些属于环境相关手动验证项。
+2026-06-22 已在本机完成 Docker Compose 全量 smoke：`app`、`milvus`、`langfuse-web`、`langfuse-worker`、`clickhouse`、`postgres`、`redis`、`minio` 均启动；API query、SSE、feedback、Langfuse trace/score 落库已验证。证据见 [docs/docker-compose-smoke.md](docs/docker-compose-smoke.md)。云部署、真实 `bge-m3` Docker 镜像、真实 RAGAS、Locust 100 QPS 仍未完成。
 
 ### API Smoke
 
@@ -174,12 +175,13 @@ uv run python -c "from src.main import app; print(app.title)"
 - [API 文档](docs/api.md) - REST + SSE + Pydantic schema
 - [评测报告](docs/benchmark.md) - 本地 benchmark smoke + 未测指标边界
 - [交付边界](docs/delivery.md) - Docker / 云部署 / demo video / resume 的手动边界
+- [Docker Compose smoke](docs/docker-compose-smoke.md) - 本地全栈与 Langfuse trace/score 验证记录
 - [架构决策记录 (ADR)](docs/decisions/)
   - [001: 为什么选 LangGraph](docs/decisions/001-why-langgraph.md)
 
 ## 🛠️ 技术栈
 
-`Python 3.11` · `uv` · `FastAPI` · `Streamlit` · `LangChain 1.x` · `LangGraph 1.x` · `Milvus / FAISS` · `bge-m3` · `bge-reranker-v2-m3` · `rank-bm25` · `RAGAS` · `Langfuse v4 (OpenTelemetry)` · `Pydantic v2` · `MCP` · `DeepSeek API` · `Docker Compose` · `pytest` · `Locust` · `Model Router` · `Artifact Store` · `Context Builder`
+`Python 3.11` · `uv` · `FastAPI` · `Streamlit` · `LangChain 1.x` · `LangGraph 1.x` · `Milvus / FAISS` · `bge-m3` · `bge-reranker-v2-m3` · `rank-bm25` · `RAGAS` · `Langfuse v4 (OpenTelemetry)` · `Pydantic v2` · `MCP` · `OpenAI-compatible API` · `Docker Compose` · `pytest` · `Locust` · `Model Router` · `Artifact Store` · `Context Builder`
 
 ## 📅 开发进度（Sprint 看板）
 
@@ -190,7 +192,7 @@ uv run python -c "from src.main import app; print(app.title)"
 | **Sprint 2** | W3 (6/1-6/7) | 混合检索 + 上下文工程 | Done，本地 smoke |
 | **Sprint 3** | W4 (6/8-6/14) | 混合范式 Agent 图 + MCP 工具层 | Done，本地 smoke |
 | **Sprint 4** | W5 (6/15-6/21) | Policy Layer + LLMOps | Done，本地 dry-run / smoke |
-| **Sprint 5** | W6 (6/22-6/30) | Streaming、feedback、demo、benchmark、docs | 本地完成；云部署、视频、简历、申请为手动边界 |
+| **Sprint 5** | W6 (6/22-6/30) | Streaming、feedback、demo、benchmark、docs、Docker Compose local smoke | 本地完成；Docker Compose + 本地 Langfuse trace/score 已验证；云部署、视频、申请为手动边界 |
 
 ## 📂 目录结构
 

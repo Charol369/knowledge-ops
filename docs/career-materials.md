@@ -2,7 +2,7 @@
 
 Date: 2026-05-28
 
-Updated: 2026-06-19
+Updated: 2026-06-22
 
 This document provides safe resume wording, a 5-minute project explanation, and interview FAQ for KnowledgeOps.
 
@@ -23,6 +23,9 @@ Use these facts in resumes, interviews, README summaries, and demo scripts.
 - Added explicit dry-run/local fallback boundaries so local tests do not require paid external models, real API keys, real Langfuse, real Redis/Postgres, Docker daemon, or cloud services.
 - Verified the current local baseline with `71` passing tests and `3` third-party warnings.
 - Measured a small 20-case local source/page retrieval set: dense Hit@5 / Recall@5 `0.75`, hybrid Hit@5 / Recall@5 `1.0`. This is not RAGAS or end-to-end answer-quality evaluation.
+- Verified local Docker Compose full-stack smoke on 2026-06-22: app, Milvus, Langfuse web/worker, ClickHouse, Postgres, Redis, and MinIO started locally.
+- Verified local Langfuse trace/score smoke on 2026-06-22: query trace and feedback score landed in ClickHouse under the same deterministic Langfuse trace id.
+- Verified the configured OpenAI-compatible paid endpoint can list models and complete a minimal request with `glm-4.7-flash`; DeepSeek model names were not available on that channel.
 
 ## Unsafe Claims Until Measured
 
@@ -35,9 +38,9 @@ Do not use these as completed claims unless later commands produce real evidence
 - 100 QPS support.
 - Single-query cost < CNY 0.05.
 - Production cloud deployment completed.
-- Docker Compose full integration verified.
-- Real Langfuse dashboard traces verified.
 - Real Postgres/Redis production persistence verified.
+- Real DeepSeek API integration verified.
+- Real bge-m3 Docker runtime verified.
 - Demo video uploaded.
 - Jobs applied.
 
@@ -49,8 +52,8 @@ Use this version when one project needs 3-4 lines.
 KnowledgeOps - 生产导向研究型 Knowledge Agent 系统
 - 基于 FastAPI + LangGraph 构建研究型 Knowledge Agent，将复杂问题拆成 plan -> retrieve -> synthesize -> report -> verify 工作流，避免把检索、引用校验、评估等确定性链路全部 agent 化。
 - 实现 PDF/Word/HTML 本地入库、FAISS dense retrieval、BM25 + RRF hybrid retrieval、Context Builder、artifact persistence、citation validation、MCP tool/resource layer，并提供 REST/SSE 查询与 Streamlit demo。
-- 加入模型路由、cache/retry/fallback、API key auth、in-memory rate limit、prompt-injection guardrails、Unicode normalization、business metrics 与 Langfuse dry-run-safe 接入边界。
-- 使用 pytest 覆盖 ingestion、retrieval、graph/API/MCP、policy、guardrails、observability、streaming、feedback 与 demo helper，当前本地验证 71 tests passed；20 条本地 source/page 标注集上 hybrid Hit@5 / Recall@5 为 1.0，RAGAS/QPS/P95/真实成本仍保留为待真实环境验证项。
+- 加入模型路由、cache/retry/fallback、API key auth、in-memory rate limit、prompt-injection guardrails、Unicode normalization、business metrics、Langfuse dry-run-safe 接入与本地 Docker Compose trace/score 验证。
+- 使用 pytest 覆盖 ingestion、retrieval、graph/API/MCP、policy、guardrails、observability、streaming、feedback 与 demo helper，当前本地验证 71 tests passed；20 条本地 source/page 标注集上 hybrid Hit@5 / Recall@5 为 1.0；Docker Compose 本地 Langfuse trace/score smoke 已通过；RAGAS/QPS/P95/真实成本仍保留为待真实环境验证项。
 ```
 
 ## Short Resume Version
@@ -58,7 +61,7 @@ KnowledgeOps - 生产导向研究型 Knowledge Agent 系统
 Use this version when space is tight.
 
 ```text
-KnowledgeOps - 研究型 Knowledge Agent：基于 FastAPI + LangGraph 实现 plan -> retrieve -> synthesize -> report -> verify 工作流，集成 hybrid retrieval、Context Builder、citation validation、MCP、SSE streaming、feedback、auth/rate limit、guardrails 和 Streamlit demo；本地 pytest 71 tests passed，20 条本地 source/page 标注集上 hybrid Hit@5 / Recall@5 为 1.0，指标边界按真实 benchmark/smoke 输出记录。
+KnowledgeOps - 研究型 Knowledge Agent：基于 FastAPI + LangGraph 实现 plan -> retrieve -> synthesize -> report -> verify 工作流，集成 hybrid retrieval、Context Builder、citation validation、MCP、SSE streaming、feedback、auth/rate limit、guardrails、Streamlit demo 和 Docker Compose 本地 Langfuse trace/score smoke；本地 pytest 71 tests passed，20 条本地 source/page 标注集上 hybrid Hit@5 / Recall@5 为 1.0，指标边界按真实 benchmark/smoke 输出记录。
 ```
 
 ## 5-Minute Project Explanation
@@ -89,7 +92,7 @@ question -> planner -> retrieval orchestrator -> synthesizer -> reporter -> veri
 - retrieval：FAISS dense、BM25 sparse、RRF hybrid；
 - context：Context Builder 和 artifact store；
 - API：FastAPI REST + SSE；
-- observability：trace_id、business metrics、Langfuse dry-run-safe path；
+- observability：trace_id、business metrics、Langfuse dry-run-safe path、本地 Docker Compose trace/score smoke；
 - protection：API key、rate limit、guardrails；
 - external integration：MCP server。
 
@@ -129,7 +132,8 @@ LangGraph graph 使用固定研究流程，不是教学式的泛 Agent demo。
 - API key auth 和 in-memory rate limit 保护 query/stream/feedback；
 - prompt injection detection 和 Unicode normalization 处理输入风险；
 - Langfuse 默认 disabled，不会在无真实配置时触发认证错误；
-- Postgres/Redis/Langfuse/Docker/cloud 都是明确的 optional/manual boundary。
+- Docker Compose 本地栈已验证 Langfuse trace/score；Postgres/Redis 在本地容器中启动，不等同于生产持久化；
+- cloud 是明确的 optional/manual boundary。
 
 这让项目在本地可以稳定验证，同时保留生产扩展路径。
 
@@ -140,6 +144,7 @@ LangGraph graph 使用固定研究流程，不是教学式的泛 Agent demo。
 - FastAPI `/api/v1/query`；
 - SSE `/api/v1/query/stream`；
 - `/api/v1/feedback` 本地捕获；
+- Docker Compose 本地 Langfuse trace/score；
 - Streamlit demo 展示 question、progress、plan、answer、citations、trace/session 和 feedback；
 - MCP server 暴露 retrieval/summarization 能力。
 
@@ -167,7 +172,7 @@ The project uses grounded evidence, citation extraction, citation validation, st
 
 ### How is cost controlled?
 
-The project includes complexity classification, model routing, local cache, retry/fallback policy, and deterministic fallbacks. In local smoke, it avoids paid model calls by default. Real cost measurement is pending real provider usage and Langfuse cost tracking.
+The project includes complexity classification, model routing, local cache, retry/fallback policy, and deterministic fallbacks. In local smoke, it avoids paid model calls by default. A minimal OpenAI-compatible paid endpoint request was verified on 2026-06-22, but the configured channel did not expose working DeepSeek models. Real cost measurement is pending real provider usage inside the main chain and Langfuse cost tracking.
 
 ### What is MCP used for?
 
@@ -181,6 +186,7 @@ Measured:
 - benchmark smoke: dense/hybrid top-5 retrieval returns evidence from local data;
 - small local retrieval eval: dense Hit@5 / Recall@5 `0.75`, hybrid Hit@5 / Recall@5 `1.0` on 20 source/page labeled cases;
 - local API/Streamlit/feedback/streaming smoke.
+- local Docker Compose full-stack smoke with Langfuse trace/score landing in ClickHouse under the same trace id.
 
 Pending:
 
@@ -189,4 +195,5 @@ Pending:
 - P95 latency;
 - QPS;
 - single-query cost;
-- Docker/cloud integration.
+- real DeepSeek integration;
+- cloud integration.

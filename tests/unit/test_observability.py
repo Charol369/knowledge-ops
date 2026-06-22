@@ -1,4 +1,4 @@
-from src.observability.langfuse_setup import get_langfuse_handler, record_langfuse_score
+from src.observability.langfuse_setup import get_langfuse_handler, record_langfuse_score, to_langfuse_trace_id
 from src.observability.metrics import BusinessMetricsRecorder, business_metrics
 from src.agents import graph as graph_module
 from src.agents.planner import planner_node
@@ -211,7 +211,7 @@ def test_record_langfuse_score_uses_configured_v4_create_score(monkeypatch):
         (
             "create_score",
             {
-                "trace_id": "trace-feedback",
+                "trace_id": to_langfuse_trace_id("trace-feedback"),
                 "name": "user_feedback",
                 "value": 1.0,
                 "comment": "Useful",
@@ -290,7 +290,7 @@ def test_graph_injects_optional_langfuse_callback_without_requiring_server(
             }
 
     monkeypatch.setattr(graph_module, "build_graph", lambda: FakeGraph())
-    monkeypatch.setattr(graph_module, "get_langfuse_handler", lambda: sentinel_handler)
+    monkeypatch.setattr(graph_module, "get_langfuse_handler", lambda trace_id=None: sentinel_handler)
 
     result = graph_module.run_research_graph(
         question="How is tracing configured?",

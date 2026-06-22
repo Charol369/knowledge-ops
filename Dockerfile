@@ -8,9 +8,10 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-# 装依赖（利用 Docker 层缓存：pyproject.toml + uv.lock 没变就不重跑 sync）
-COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev
+# 装轻量 API 依赖。完整开发依赖包含 sentence-transformers/torch/CUDA，
+# Docker 联调默认走 hash embedding，不需要下载大体积模型栈。
+COPY requirements.docker.txt ./
+RUN uv venv .venv && uv pip install --python .venv/bin/python -r requirements.docker.txt
 
 # 拷业务代码
 COPY src ./src

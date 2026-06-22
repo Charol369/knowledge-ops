@@ -4,13 +4,36 @@
 或网络相关错误。真实 Langfuse 只作为可选配置路径。
 """
 from collections.abc import Callable
+import hashlib
 import os
+import re
 from typing import Any
 
 from src.config import settings
 
 
+_W3C_TRACE_ID_RE = re.compile(r"^[0-9a-f]{32}$")
+
+
+def to_langfuse_trace_id(trace_id: str) -> str:
+    """Map application trace IDs to Langfuse/W3C-compatible trace IDs."""
+    normalized = trace_id.strip().lower()
+    if _W3C_TRACE_ID_RE.fullmatch(normalized) and set(normalized) != {"0"}:
+        return normalized
+
+    try:
+        from langfuse import Langfuse
+
+        generated = str(Langfuse.create_trace_id(seed=trace_id)).strip().lower()
+        if _W3C_TRACE_ID_RE.fullmatch(generated) and set(generated) != {"0"}:
+            return generated
+    except Exception:
+        pass
+    return hashlib.sha256(trace_id.encode("utf-8")).hexdigest()[:32]
+
+
 def get_langfuse_handler(
+    trace_id: str | None = None,
     handler_factory: Callable[[], Any] | None = None,
 ) -> Any | None:
     """Return a Langfuse callback handler only when explicitly configured."""
@@ -27,6 +50,10 @@ def get_langfuse_handler(
             return handler_factory()
         from langfuse.langchain import CallbackHandler
 
+        if trace_id:
+            return CallbackHandler(
+                trace_context={"trace_id": to_langfuse_trace_id(trace_id)}
+            )
         return CallbackHandler()
     except Exception:
         return None
@@ -64,7 +91,7 @@ def record_langfuse_score(
                 host=settings.langfuse_host,
             )
         score_kwargs: dict[str, Any] = {
-            "trace_id": trace_id,
+            "trace_id": to_langfuse_trace_id(trace_id),
             "name": name,
             "value": float(score),
         }

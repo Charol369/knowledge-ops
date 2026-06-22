@@ -129,6 +129,7 @@ Langfuse 边界：
 
 - 默认本地配置 `LANGFUSE_ENABLED=false`，接口仍返回 `status=ok`，并将反馈写入 `BusinessMetricsRecorder` 的内存事件列表。
 - 当 `LANGFUSE_ENABLED=true` 且 public/secret key 完整时，接口会尝试提交 Langfuse-compatible score。
+- API 响应中的 `trace_id` 保持应用层可读 ID；Langfuse 内部会把它 deterministic 映射为 32 位小写 hex trace id，使 graph trace 和 feedback score 在 Langfuse 中挂到同一条 trace。
 - 当 Langfuse 配置不完整或 SDK 调用失败时，接口保留本地捕获，并在 `langfuse_status` / `blocked_reason` 中返回明确状态。
 
 ## `POST /api/v1/ingest`

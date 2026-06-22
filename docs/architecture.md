@@ -121,7 +121,7 @@ graph TD
 | `planner -> retrieval_orchestrator -> synthesizer -> reporter -> verifier` | 已接入主链路 | 固定 LangGraph 流程，不是自由游走的多 Agent |
 | `/api/v1/query` | 已接入主链路 | 调用 graph-backed 查询 |
 | `/api/v1/query/stream` | 已接入主链路 | 有界 SSE wrapper，复用 query 合约 |
-| `/api/v1/feedback` | 已接入主链路 | 本地指标记录，Langfuse 可选转发 |
+| `/api/v1/feedback` | 已接入主链路 | 本地指标记录；Docker Compose 本地 Langfuse score 已验证 |
 | FAISS dense retrieval | 已接入主链路 | 默认本地 smoke 使用 hash embedding |
 | BM25 sparse retrieval | 已接入主链路 | 关键词/术语召回补充 |
 | RRF hybrid retrieval | 已接入主链路 | 当前默认融合策略 |
@@ -129,9 +129,10 @@ graph TD
 | Citation validation | 已接入主链路 | verifier 校验 answer citations |
 | Query Transform | 已实现，默认关闭 | `QUERY_TRANSFORM_ENABLED=false`；开启后扩展候选查询 |
 | Cross-Encoder Rerank | 已实现，默认关闭 | `RERANK_ENABLED=false`；本地模型缺失时回退原候选，不伪造分数 |
-| Langfuse | dry-run / optional | 默认 disabled，未声明真实 dashboard trace |
+| Langfuse | 已接入，本地 Compose 已验证 | 默认 disabled；Docker Compose 下本地 trace/score 已落库，见 `docs/docker-compose-smoke.md` |
 | RAGAS | dry-run scaffold | 未运行真实 RAGAS 指标 |
-| Docker Compose / Milvus / Langfuse stack | manual boundary | 配置存在，未声明本次全量联调已完成 |
+| Docker Compose / Milvus / Langfuse stack | 已完成本地全量联调 | `app + Milvus + Langfuse web/worker + ClickHouse + Postgres + Redis + MinIO` 已本机 smoke |
+| Paid OpenAI-compatible API | 已验证可调用，不默认接入主链路 | 当前渠道可列模型并调用 `glm-4.7-flash`；DeepSeek 模型渠道未开通 |
 | Locust / 100 QPS | manual boundary | 脚本存在，未声明已压测达标 |
 | Cloud deployment | manual boundary | 未声明已公网部署 |
 
@@ -360,7 +361,7 @@ question
 | **Sprint 2** | W3 | 检索增强 + 上下文工程 | Context Builder 可用；Recall@5 待真实标注集 |
 | **Sprint 3** | W4 | 混合范式 Agent 图 + MCP | graph + MCP 接入验证 |
 | **Sprint 4** | W5 | Policy Layer + LLMOps | 模型路由 + Langfuse dry-run + Guardrails |
-| **Sprint 5** | W6 | Streaming + Demo + benchmark + docs | 本地 demo/API/benchmark smoke；Docker、云部署、视频、简历为手动边界 |
+| **Sprint 5** | W6 | Streaming + Demo + benchmark + docs + Docker local smoke | 本地 demo/API/benchmark/Docker Compose/Langfuse trace smoke；云部署、视频、申请为手动边界 |
 
 ---
 

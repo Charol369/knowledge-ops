@@ -83,7 +83,7 @@ def build_graph():
 
 def _graph_invoke_config(trace_id: str) -> dict[str, Any]:
     config: dict[str, Any] = {"configurable": {"thread_id": trace_id}}
-    handler = get_langfuse_handler()
+    handler = get_langfuse_handler(trace_id=trace_id)
     if handler is not None:
         config["callbacks"] = [handler]
     return config
