@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -22,8 +25,17 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
 
+      - name: Lint CI-critical files
+        run: uv run ruff check scripts/smoke_external_interfaces.py tests/unit/test_external_smoke.py src/config.py
+
+      - name: Compile smoke files
+        run: uv run python -m py_compile frontend/app.py scripts/locust_loadtest.py scripts/smoke_external_interfaces.py src/config.py
+
+      - name: Import API app
+        run: uv run python -c "from src.main import app; print(app.title)"
+
       - name: Run tests
         run: uv run pytest -q
 
-      - name: Compile smoke files
-        run: uv run python -m py_compile frontend/app.py scripts/locust_loadtest.py
+      # Real provider, Docker Compose, and Langfuse checks require local secrets/services.
+      # They are tracked separately via scripts/smoke_external_interfaces.py artifacts.

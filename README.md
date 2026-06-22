@@ -182,6 +182,7 @@ uv run python scripts/smoke_external_interfaces.py --strict --include-container-
 - [评测报告](docs/benchmark.md) - 本地 benchmark smoke + 未测指标边界
 - [交付边界](docs/delivery.md) - Docker / 云部署 / demo video / resume 的手动边界
 - [Docker Compose smoke](docs/docker-compose-smoke.md) - 本地全栈与 Langfuse trace/score 验证记录
+- [Demo dry run](docs/demo-dry-run.md) - 本地 Streamlit 页面、SSE query、feedback 路径验证记录
 - [外部接口 smoke artifact](eval/results/external_smoke_latest.json) - 当前 provider / 本地服务 / Docker 依赖检查输出
 - [架构决策记录 (ADR)](docs/decisions/)
   - [001: 为什么选 LangGraph](docs/decisions/001-why-langgraph.md)

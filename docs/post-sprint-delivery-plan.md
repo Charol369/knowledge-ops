@@ -45,6 +45,8 @@ Implemented and locally verified:
 - Sprint 3: LangGraph research graph, graph-backed `/api/v1/query`, citation validation, structured output validation, MCP tool/resource layer.
 - Sprint 4: policy routing, cache/retry/fallback, guardrails, trace_id, business metrics, Langfuse dry-run safe path, auth, rate limit, optional memory boundary.
 - Sprint 5: `/api/v1/query/stream`, `/api/v1/feedback`, Streamlit demo, feedback capture, final docs, delivery boundary, benchmark smoke, Docker Compose local stack smoke, local Langfuse trace/score smoke, external interface smoke artifact.
+- Portfolio hardening: CI workflow has been supplemented with ruff, py_compile, FastAPI import smoke, and pytest; local equivalent commands passed. README CI badge must only be added after a real GitHub Actions green run.
+- Demo dry run: bounded local Streamlit page load, SSE query path, and feedback path passed; see `docs/demo-dry-run.md`.
 
 Known delivery boundaries:
 
@@ -92,6 +94,7 @@ Done when:
 - `git status --short --branch` shows no unintended modified files.
 - Any committed cleanup is pushed.
 - Test result is recorded in the summary.
+- GitHub Actions CI is green before adding any README CI badge.
 
 ## Phase 2: Demo Dry Run
 
@@ -133,6 +136,7 @@ Done when:
 - Demo path is manually runnable.
 - Screenshots or recording source files are saved outside the repository, unless intentionally adding curated documentation assets.
 - No claim is made that public deployment or video upload is complete.
+- Bounded dry run evidence is recorded in `docs/demo-dry-run.md`.
 
 ## Phase 3: Safe Resume Claim Draft
 

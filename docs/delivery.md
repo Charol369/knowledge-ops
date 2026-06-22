@@ -14,6 +14,8 @@
 | Docker Compose full-stack smoke | 已执行 | `docker compose up -d --build`；`app`、Milvus、Langfuse、ClickHouse、Postgres、Redis、MinIO 均启动，见 `docs/docker-compose-smoke.md` |
 | Local Langfuse trace / score | 已执行 | API query + feedback 后，ClickHouse `traces` 和 `scores` 同 id 落库 |
 | External interface smoke artifact | 已执行 | `uv run python scripts/smoke_external_interfaces.py --strict --include-container-provider --output eval/results/external_smoke_latest.json`；15 个检查通过，旧别名按预期不可用 |
+| CI workflow | 已补充，本地等价通过 | `.github/workflows/ci.yml` 已覆盖 ruff、py_compile、FastAPI import smoke、pytest；远端 green 后再加 README badge |
+| Demo dry run | 已执行 | Streamlit 本地页面和 health 返回成功；demo SSE query + feedback 路径通过，见 `docs/demo-dry-run.md` |
 | README / API / benchmark 文档 | 已更新 | 本文档与 `docs/api.md`、`docs/benchmark.md`、`README.md` |
 
 ## 环境相关验证
@@ -36,6 +38,8 @@
 4. 展示 progress、plan、answer、citations、trace/session metadata
 5. 提交 Useful / Neutral / Not useful feedback
 6. 说明未测指标：Recall@5、RAGAS、P95、成本、100 QPS
+
+已执行的 bounded dry run 见 `docs/demo-dry-run.md`。该记录不等同于已录制或上传 demo video。
 
 ## Resume / Job Application 边界
 
