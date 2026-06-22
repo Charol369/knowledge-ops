@@ -25,7 +25,7 @@ load_dotenv()
 # 关键参数：base_url（指向 DeepSeek 兼容端点）+ api_key + model
 # temperature=0.7 适合"有点创造性、但不离谱"的回答（0 = 完全确定性，1 = 高随机）
 llm = ChatOpenAI(
-    model=os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
+    model=os.getenv("DEEPSEEK_MODEL", "deepseek-v4-pro"),
     api_key=os.getenv("DEEPSEEK_API_KEY"),
     base_url=os.getenv("DEEPSEEK_BASE_URL"),
     temperature=0.7,

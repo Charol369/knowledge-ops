@@ -21,11 +21,11 @@ Use these facts in resumes, interviews, README summaries, and demo scripts.
 - Implemented MCP tool/resource layer for local retrieval and summarization services.
 - Implemented Streamlit demo that calls the backend API and displays progress, plan, answer, citations, trace/session metadata, and feedback.
 - Added explicit dry-run/local fallback boundaries so local tests do not require paid external models, real API keys, real Langfuse, real Redis/Postgres, Docker daemon, or cloud services.
-- Verified the current local baseline with `71` passing tests and `3` third-party warnings.
+- Verified the current local baseline with `77` passing tests and `3` third-party warnings.
 - Measured a small 20-case local source/page retrieval set: dense Hit@5 / Recall@5 `0.75`, hybrid Hit@5 / Recall@5 `1.0`. This is not RAGAS or end-to-end answer-quality evaluation.
 - Verified local Docker Compose full-stack smoke on 2026-06-22: app, Milvus, Langfuse web/worker, ClickHouse, Postgres, Redis, and MinIO started locally.
 - Verified local Langfuse trace/score smoke on 2026-06-22: query trace and feedback score landed in ClickHouse under the same deterministic Langfuse trace id.
-- Verified the configured OpenAI-compatible paid endpoint can list models and complete a minimal request with `glm-4.7-flash`; DeepSeek model names were not available on that channel.
+- Verified the configured OpenAI-compatible paid endpoint can list 18 models and complete minimal Chat Completions requests with `deepseek-v4-pro` and `deepseek-v4-flash`; `deepseek-chat` and `deepseek-reasoner` are not exposed by the current provider.
 
 ## Unsafe Claims Until Measured
 
@@ -39,7 +39,7 @@ Do not use these as completed claims unless later commands produce real evidence
 - Single-query cost < CNY 0.05.
 - Production cloud deployment completed.
 - Real Postgres/Redis production persistence verified.
-- Real DeepSeek API integration verified.
+- Official DeepSeek endpoint or official aliases `deepseek-chat` / `deepseek-reasoner` verified.
 - Real bge-m3 Docker runtime verified.
 - Demo video uploaded.
 - Jobs applied.
@@ -53,7 +53,7 @@ KnowledgeOps - 生产导向研究型 Knowledge Agent 系统
 - 基于 FastAPI + LangGraph 构建研究型 Knowledge Agent，将复杂问题拆成 plan -> retrieve -> synthesize -> report -> verify 工作流，避免把检索、引用校验、评估等确定性链路全部 agent 化。
 - 实现 PDF/Word/HTML 本地入库、FAISS dense retrieval、BM25 + RRF hybrid retrieval、Context Builder、artifact persistence、citation validation、MCP tool/resource layer，并提供 REST/SSE 查询与 Streamlit demo。
 - 加入模型路由、cache/retry/fallback、API key auth、in-memory rate limit、prompt-injection guardrails、Unicode normalization、business metrics、Langfuse dry-run-safe 接入与本地 Docker Compose trace/score 验证。
-- 使用 pytest 覆盖 ingestion、retrieval、graph/API/MCP、policy、guardrails、observability、streaming、feedback 与 demo helper，当前本地验证 71 tests passed；20 条本地 source/page 标注集上 hybrid Hit@5 / Recall@5 为 1.0；Docker Compose 本地 Langfuse trace/score smoke 已通过；RAGAS/QPS/P95/真实成本仍保留为待真实环境验证项。
+- 使用 pytest 覆盖 ingestion、retrieval、graph/API/MCP、policy、guardrails、observability、streaming、feedback、demo helper 与 external smoke helper，当前本地验证 77 tests passed；20 条本地 source/page 标注集上 hybrid Hit@5 / Recall@5 为 1.0；Docker Compose 本地 Langfuse trace/score smoke 已通过；RAGAS/QPS/P95/真实成本仍保留为待真实环境验证项。
 ```
 
 ## Short Resume Version
@@ -61,7 +61,7 @@ KnowledgeOps - 生产导向研究型 Knowledge Agent 系统
 Use this version when space is tight.
 
 ```text
-KnowledgeOps - 研究型 Knowledge Agent：基于 FastAPI + LangGraph 实现 plan -> retrieve -> synthesize -> report -> verify 工作流，集成 hybrid retrieval、Context Builder、citation validation、MCP、SSE streaming、feedback、auth/rate limit、guardrails、Streamlit demo 和 Docker Compose 本地 Langfuse trace/score smoke；本地 pytest 71 tests passed，20 条本地 source/page 标注集上 hybrid Hit@5 / Recall@5 为 1.0，指标边界按真实 benchmark/smoke 输出记录。
+KnowledgeOps - 研究型 Knowledge Agent：基于 FastAPI + LangGraph 实现 plan -> retrieve -> synthesize -> report -> verify 工作流，集成 hybrid retrieval、Context Builder、citation validation、MCP、SSE streaming、feedback、auth/rate limit、guardrails、Streamlit demo 和 Docker Compose 本地 Langfuse trace/score smoke；本地 pytest 77 tests passed，20 条本地 source/page 标注集上 hybrid Hit@5 / Recall@5 为 1.0，指标边界按真实 benchmark/smoke 输出记录。
 ```
 
 ## 5-Minute Project Explanation
@@ -148,7 +148,7 @@ LangGraph graph 使用固定研究流程，不是教学式的泛 Agent demo。
 - Streamlit demo 展示 question、progress、plan、answer、citations、trace/session 和 feedback；
 - MCP server 暴露 retrieval/summarization 能力。
 
-当前本地验证是 `71 tests passed`，benchmark smoke 能跑 dense/hybrid retrieval 并返回 top-5 evidence。当前 20 条本地 source/page 标注集上 dense Hit@5 / Recall@5 为 `0.75`，hybrid Hit@5 / Recall@5 为 `1.0`。
+当前本地验证是 `77 tests passed`，benchmark smoke 能跑 dense/hybrid retrieval 并返回 top-5 evidence。当前 20 条本地 source/page 标注集上 dense Hit@5 / Recall@5 为 `0.75`，hybrid Hit@5 / Recall@5 为 `1.0`。
 
 但我不会声称生产 Recall@5、RAGAS、P95、QPS 或成本已经达标，因为这些需要更大标注集、真实模型/观测配置、真实评估命令和压测环境。
 
@@ -172,7 +172,7 @@ The project uses grounded evidence, citation extraction, citation validation, st
 
 ### How is cost controlled?
 
-The project includes complexity classification, model routing, local cache, retry/fallback policy, and deterministic fallbacks. In local smoke, it avoids paid model calls by default. A minimal OpenAI-compatible paid endpoint request was verified on 2026-06-22, but the configured channel did not expose working DeepSeek models. Real cost measurement is pending real provider usage inside the main chain and Langfuse cost tracking.
+The project includes complexity classification, model routing, local cache, retry/fallback policy, and deterministic fallbacks. In local smoke, it avoids paid model calls by default. Minimal OpenAI-compatible provider requests were verified on 2026-06-22 with `deepseek-v4-pro` and `deepseek-v4-flash`, but the main chain still does not default to paid generation. Real cost measurement is pending real provider usage inside the main chain and Langfuse cost tracking.
 
 ### What is MCP used for?
 
@@ -182,7 +182,7 @@ MCP exposes retrieval and summarization capabilities as standard tools/resources
 
 Measured:
 
-- local tests: `71 passed`;
+- local tests: `77 passed`;
 - benchmark smoke: dense/hybrid top-5 retrieval returns evidence from local data;
 - small local retrieval eval: dense Hit@5 / Recall@5 `0.75`, hybrid Hit@5 / Recall@5 `1.0` on 20 source/page labeled cases;
 - local API/Streamlit/feedback/streaming smoke.
@@ -195,5 +195,5 @@ Pending:
 - P95 latency;
 - QPS;
 - single-query cost;
-- real DeepSeek integration;
+- official DeepSeek endpoint / alias integration;
 - cloud integration.

@@ -18,7 +18,7 @@ client = OpenAI(
 
 # 关键：stream=True，返回的是迭代器而非完整对象
 stream = client.chat.completions.create(
-    model=os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
+    model=os.getenv("DEEPSEEK_MODEL", "deepseek-v4-pro"),
     messages=[
         {"role": "user", "content": "写一首关于程序员的 7 言绝句，每句之后换行。"},
     ],

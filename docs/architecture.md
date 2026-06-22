@@ -132,7 +132,7 @@ graph TD
 | Langfuse | 已接入，本地 Compose 已验证 | 默认 disabled；Docker Compose 下本地 trace/score 已落库，见 `docs/docker-compose-smoke.md` |
 | RAGAS | dry-run scaffold | 未运行真实 RAGAS 指标 |
 | Docker Compose / Milvus / Langfuse stack | 已完成本地全量联调 | `app + Milvus + Langfuse web/worker + ClickHouse + Postgres + Redis + MinIO` 已本机 smoke |
-| Paid OpenAI-compatible API | 已验证可调用，不默认接入主链路 | 当前渠道可列模型并调用 `glm-4.7-flash`；DeepSeek 模型渠道未开通 |
+| Paid OpenAI-compatible API | 已验证可调用，不默认接入主链路 | 当前供应商可列 18 个模型；`deepseek-v4-pro` / `deepseek-v4-flash` 最小调用通过；`deepseek-chat` / `deepseek-reasoner` 在当前供应商不可用 |
 | Locust / 100 QPS | manual boundary | 脚本存在，未声明已压测达标 |
 | Cloud deployment | manual boundary | 未声明已公网部署 |
 

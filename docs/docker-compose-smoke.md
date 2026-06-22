@@ -73,15 +73,20 @@ The API still returns the application trace id. Internally, Langfuse tracing and
 
 ## Paid API Check
 
-The configured OpenAI-compatible endpoint was reachable and `models.list()` returned 17 models. The configured `deepseek-v4-pro` and fallback `deepseek-chat` both returned `model_not_found` from the external distributor, so real DeepSeek is not verified.
+The configured OpenAI-compatible endpoint was reachable and `/models` returned 18 models. The current provider exposes two DeepSeek-named models:
 
-A minimal paid-provider request using one listed model was successful:
+- `deepseek-v4-pro`
+- `deepseek-v4-flash`
+
+Minimal Chat Completions requests succeeded for both current models:
 
 | Model requested | Result |
 |---|---|
-| `glm-4.7-flash` | request succeeded, response content `ok` |
+| `deepseek-v4-pro` | request succeeded, response content `ok` |
+| `deepseek-v4-flash` | request succeeded, response content `ok` |
+| Docker app container configured model | request succeeded, response content `ok` |
 
-Do not claim real DeepSeek integration until the target endpoint exposes a working `deepseek-*` model or the project is pointed at the official DeepSeek endpoint with a verified key.
+The current provider does not expose the official aliases `deepseek-chat` or `deepseek-reasoner`; both are treated as expected-unavailable for this provider. Do not claim official DeepSeek endpoint verification, production cost tracking, or main-chain paid generation from this smoke alone.
 
 ## Remaining Boundaries
 
@@ -92,4 +97,4 @@ Do not claim real DeepSeek integration until the target endpoint exposes a worki
 | Locust 100 QPS x 5min | Not run. |
 | Cloud deployment | Not run. |
 | Production secrets / TLS / reverse proxy | Not configured. |
-| DeepSeek API | Credentials/config exist, but current external channel does not expose a working DeepSeek model. |
+| Official DeepSeek endpoint / aliases | Not verified; current provider uses `deepseek-v4-pro` / `deepseek-v4-flash`, while `deepseek-chat` / `deepseek-reasoner` are unavailable. |

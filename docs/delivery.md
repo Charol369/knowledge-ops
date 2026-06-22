@@ -13,6 +13,7 @@
 | Small retrieval eval | 已执行 | `uv run python scripts/evaluate_retrieval.py --dataset eval/retrieval_qa.jsonl --docs-dir data --retrieval dense,hybrid --top-k 5 --embedding-backend hash --output eval/results/retrieval_latest.json` |
 | Docker Compose full-stack smoke | 已执行 | `docker compose up -d --build`；`app`、Milvus、Langfuse、ClickHouse、Postgres、Redis、MinIO 均启动，见 `docs/docker-compose-smoke.md` |
 | Local Langfuse trace / score | 已执行 | API query + feedback 后，ClickHouse `traces` 和 `scores` 同 id 落库 |
+| External interface smoke artifact | 已执行 | `uv run python scripts/smoke_external_interfaces.py --strict --include-container-provider --output eval/results/external_smoke_latest.json`；15 个检查通过，旧别名按预期不可用 |
 | README / API / benchmark 文档 | 已更新 | 本文档与 `docs/api.md`、`docs/benchmark.md`、`README.md` |
 
 ## 环境相关验证
@@ -21,7 +22,7 @@
 |---|---|---|
 | Cloud deployment | 手动边界 | 需要云账号、域名、密钥、镜像仓库或目标平台配置 |
 | Locust 100 QPS x 5min | 手动待跑 | 本次本地验证未启动长运行 API server 和 headless Locust 压测 |
-| 真实 DeepSeek API | 渠道未验证通过 | 当前 OpenAI-compatible endpoint 可调用 `glm-4.7-flash`，但 `deepseek-v4-pro` / `deepseek-chat` 返回 `model_not_found` |
+| OpenAI-compatible DeepSeek 命名模型 | 最小调用已验证 | 当前供应商可列 18 个模型；`deepseek-v4-pro` / `deepseek-v4-flash` 返回 `ok`；`deepseek-chat` / `deepseek-reasoner` 在当前供应商不可用 |
 | 真实 bge-m3 Docker runtime | 手动边界 | Docker app 使用 lightweight 依赖和 `hash` embedding；未下载 torch/sentence-transformers 大模型栈 |
 | 真实 RAGAS / 生产级 Recall@5 | 待真实数据集 | 当前只有 20 条本地 source/page 标注集；尚未覆盖多文档生产语料和答案质量 |
 
@@ -55,7 +56,7 @@
 - 已通过 100 QPS x 5min 压测。
 - Recall@5 达到 85% 或 RAGAS Faithfulness 达到目标。
 - 已上传 demo video、已投递岗位、已被外部平台验证。
-- 真实 DeepSeek 已接通；当前仅验证 OpenAI-compatible 渠道有其他可调用模型。
+- 官方 DeepSeek endpoint、`deepseek-chat` / `deepseek-reasoner` 官方别名或主链路真实付费生成已完成生产验证；当前只验证了 OpenAI-compatible 供应商的 `deepseek-v4-pro` / `deepseek-v4-flash` 最小调用。
 
 ## 后续计划边界
 

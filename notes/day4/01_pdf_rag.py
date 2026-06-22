@@ -115,7 +115,7 @@ retriever = vectorstore.as_retriever(search_kwargs={"k": TOP_K})
 
 # ============== 6. RAG Chain ==============
 llm = ChatOpenAI(
-    model=os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
+    model=os.getenv("DEEPSEEK_MODEL", "deepseek-v4-pro"),
     api_key=os.getenv("DEEPSEEK_API_KEY"),
     base_url=os.getenv("DEEPSEEK_BASE_URL"),
 )

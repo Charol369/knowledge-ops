@@ -99,7 +99,7 @@ graph TD
 | Langfuse | 已接入，本地 Compose 已验证 | 默认 `.env.example` disabled；Docker Compose 中本地 trace/score 已验证，见 `docs/docker-compose-smoke.md` |
 | RAGAS | dry-run scaffold | 未运行真实 RAGAS 指标 |
 | Docker Compose | 已完成本地全量联调 | `app + Milvus + Langfuse web/worker + ClickHouse + Postgres + Redis + MinIO` 已本机 smoke |
-| Paid OpenAI-compatible API | 已验证可调用，不默认接入主链路 | 当前渠道可列模型并用 `glm-4.7-flash` 返回 `ok`；`deepseek-v4-pro` / `deepseek-chat` 未在渠道中可用 |
+| Paid OpenAI-compatible API | 已验证可调用，不默认接入主链路 | 当前供应商可列 18 个模型；`deepseek-v4-pro` / `deepseek-v4-flash` 最小调用返回 `ok`；`deepseek-chat` / `deepseek-reasoner` 在当前供应商不可用 |
 | Locust / 100 QPS | manual boundary | 脚本存在，未运行 100 QPS x 5min |
 | Cloud deployment | manual boundary | 未声明公网部署完成 |
 
@@ -150,6 +150,12 @@ uv run pytest tests/integration/test_feedback.py
 uv run python -c "from src.main import app; print(app.title)"
 ```
 
+### External Interface Smoke（需要真实 `.env` + Docker 栈）
+
+```powershell
+uv run python scripts/smoke_external_interfaces.py --strict --include-container-provider --output eval/results/external_smoke_latest.json
+```
+
 ### MCP 接入 Claude Desktop（**简历卖点**）
 
 编辑 `%APPDATA%\Claude\claude_desktop_config.json`：
@@ -176,6 +182,7 @@ uv run python -c "from src.main import app; print(app.title)"
 - [评测报告](docs/benchmark.md) - 本地 benchmark smoke + 未测指标边界
 - [交付边界](docs/delivery.md) - Docker / 云部署 / demo video / resume 的手动边界
 - [Docker Compose smoke](docs/docker-compose-smoke.md) - 本地全栈与 Langfuse trace/score 验证记录
+- [外部接口 smoke artifact](eval/results/external_smoke_latest.json) - 当前 provider / 本地服务 / Docker 依赖检查输出
 - [架构决策记录 (ADR)](docs/decisions/)
   - [001: 为什么选 LangGraph](docs/decisions/001-why-langgraph.md)
 

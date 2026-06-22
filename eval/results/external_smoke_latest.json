@@ -1,0 +1,331 @@
+{
+  "generated_at": "2026-06-22T09:06:16.394478+00:00",
+  "description": "KnowledgeOps external/runtime interface smoke.",
+  "provider_endpoint": {
+    "scheme": "https",
+    "host": "elysiver.h-e.top",
+    "path": "/v1",
+    "base_url_sha256_12": "ca6e900ccdd0"
+  },
+  "checks": {
+    "provider": {
+      "models_list": {
+        "status": "ok",
+        "scheme": "https",
+        "host": "elysiver.h-e.top",
+        "path": "/v1",
+        "base_url_sha256_12": "ca6e900ccdd0",
+        "status_code": 200,
+        "elapsed_seconds": 0.9218200999312103,
+        "model_count": 18,
+        "deepseek_model_count": 2,
+        "model_ids": [
+          "0wFF",
+          "ASecretCat",
+          "deepseek-v4-flash",
+          "deepseek-v4-pro",
+          "gemma-4-26b-a4b-it",
+          "gemma-4-31b-it",
+          "glm-5.1",
+          "glm-5.2",
+          "gpt-5.5-chat",
+          "gpt-oss-120b",
+          "gpt-oss-20b",
+          "grok-4.20-0309-reasoning-console",
+          "grok-4.20-multi-agent-high",
+          "grok-4.20-multi-agent-low",
+          "grok-4.3-high",
+          "grok-4.3-low",
+          "llama3.1-8b",
+          "openrouter-random"
+        ],
+        "deepseek_model_ids": [
+          "deepseek-v4-flash",
+          "deepseek-v4-pro"
+        ]
+      },
+      "chat_models": {
+        "deepseek-v4-pro": {
+          "status": "ok",
+          "model_requested": "deepseek-v4-pro",
+          "model_returned": "deepseek-v4-pro",
+          "finish_reason": "stop",
+          "content": "ok",
+          "elapsed_seconds": 6.841135299997404,
+          "usage": {
+            "completion_tokens": 42,
+            "prompt_tokens": 17,
+            "total_tokens": 59,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": null,
+              "audio_tokens": 0,
+              "reasoning_tokens": 0,
+              "rejected_prediction_tokens": null,
+              "text_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 0,
+              "text_tokens": 0,
+              "image_tokens": 0
+            },
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "input_tokens_details": null,
+            "claude_cache_creation_5_m_tokens": 0,
+            "claude_cache_creation_1_h_tokens": 0
+          },
+          "expectation": "available",
+          "expectation_met": true
+        },
+        "deepseek-v4-flash": {
+          "status": "ok",
+          "model_requested": "deepseek-v4-flash",
+          "model_returned": "deepseek-v4-flash",
+          "finish_reason": "stop",
+          "content": "ok",
+          "elapsed_seconds": 2.9921359999570996,
+          "usage": {
+            "completion_tokens": 43,
+            "prompt_tokens": 17,
+            "total_tokens": 60,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": null,
+              "audio_tokens": 0,
+              "reasoning_tokens": 0,
+              "rejected_prediction_tokens": null,
+              "text_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 0,
+              "text_tokens": 0,
+              "image_tokens": 0
+            },
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "input_tokens_details": null,
+            "claude_cache_creation_5_m_tokens": 0,
+            "claude_cache_creation_1_h_tokens": 0
+          },
+          "expectation": "available",
+          "expectation_met": true
+        }
+      },
+      "expected_unavailable_models": {
+        "deepseek-chat": {
+          "status": "expected_unavailable",
+          "model_requested": "deepseek-chat",
+          "status_code": 503,
+          "elapsed_seconds": 2.4473767000017688,
+          "error": "Error code: 503 - {'error': {'code': 'model_not_found', 'message': 'No available channel for model deepseek-chat under group default (distributor) (request id: 20260622090630329259869In6NCdTW)', 'type': 'new_api_error'}}",
+          "response": "{'error': {'code': 'model_not_found', 'message': 'No available channel for model deepseek-chat under group default (distributor) (request id: 20260622090630329259869In6NCdTW)', 'type': 'new_api_error'}}",
+          "expectation": "unavailable",
+          "expectation_met": true
+        },
+        "deepseek-reasoner": {
+          "status": "expected_unavailable",
+          "model_requested": "deepseek-reasoner",
+          "status_code": 503,
+          "elapsed_seconds": 2.316328499931842,
+          "error": "Error code: 503 - {'error': {'code': 'model_not_found', 'message': 'No available channel for model deepseek-reasoner under group default (distributor) (request id: 20260622090632649929870YicqREWA)', 'type': 'new_api_error'}}",
+          "response": "{'error': {'code': 'model_not_found', 'message': 'No available channel for model deepseek-reasoner under group default (distributor) (request id: 20260622090632649929870YicqREWA)', 'type': 'new_api_error'}}",
+          "expectation": "unavailable",
+          "expectation_met": true
+        }
+      }
+    },
+    "local_services": {
+      "api_health": {
+        "status": "ok",
+        "url": "http://localhost:8000/health",
+        "status_code": 200,
+        "elapsed_seconds": 0.07276180002372712,
+        "json": {
+          "status": "ok",
+          "version": "0.0.1"
+        }
+      },
+      "langfuse_web": {
+        "status": "ok",
+        "url": "http://localhost:3000",
+        "status_code": 200,
+        "elapsed_seconds": 0.08399700000882149,
+        "text": "<!DOCTYPE html><html lang=\"en\"><head><meta charSet=\"utf-8\" data-next-head=\"\"/><meta name=\"viewport\" content=\"width=device-width\" data-next-head=\"\"/><link rel=\"preload\" href=\"/_next/static/chunks/1_225"
+      },
+      "milvus_health": {
+        "status": "ok",
+        "url": "http://localhost:9092/healthz",
+        "status_code": 200,
+        "elapsed_seconds": 0.07348879997152835,
+        "text": "OK"
+      },
+      "minio_health": {
+        "status": "ok",
+        "url": "http://localhost:9090/minio/health/live",
+        "status_code": 200,
+        "elapsed_seconds": 0.08483929990325123,
+        "text": ""
+      },
+      "clickhouse_ping": {
+        "status": "ok",
+        "url": "http://localhost:8123/ping",
+        "status_code": 200,
+        "elapsed_seconds": 2.1229683000128716,
+        "text": "Ok.\n"
+      }
+    },
+    "docker": {
+      "compose_ps": {
+        "status": "ok",
+        "command": [
+          "docker",
+          "compose",
+          "ps"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 0.36076980002690107,
+        "services": [
+          {
+            "service": "app",
+            "name": "knowledge-ops-app",
+            "state": "running",
+            "health": "healthy",
+            "status": "Up 56 minutes (healthy)"
+          },
+          {
+            "service": "clickhouse",
+            "name": "knowledge-ops-clickhouse",
+            "state": "running",
+            "health": "healthy",
+            "status": "Up 2 hours (healthy)"
+          },
+          {
+            "service": "langfuse-web",
+            "name": "knowledge-ops-langfuse-web",
+            "state": "running",
+            "health": "",
+            "status": "Up 2 hours"
+          },
+          {
+            "service": "langfuse-worker",
+            "name": "knowledge-ops-langfuse-worker",
+            "state": "running",
+            "health": "",
+            "status": "Up 2 hours"
+          },
+          {
+            "service": "milvus",
+            "name": "knowledge-ops-milvus",
+            "state": "running",
+            "health": "healthy",
+            "status": "Up 3 hours (healthy)"
+          },
+          {
+            "service": "minio",
+            "name": "knowledge-ops-minio",
+            "state": "running",
+            "health": "healthy",
+            "status": "Up 3 hours (healthy)"
+          },
+          {
+            "service": "postgres",
+            "name": "knowledge-ops-postgres",
+            "state": "running",
+            "health": "healthy",
+            "status": "Up 3 hours (healthy)"
+          },
+          {
+            "service": "redis",
+            "name": "knowledge-ops-redis",
+            "state": "running",
+            "health": "healthy",
+            "status": "Up 3 hours (healthy)"
+          }
+        ],
+        "stderr": ""
+      },
+      "exec": {
+        "clickhouse_select_1": {
+          "status": "ok",
+          "command": [
+            "docker",
+            "compose",
+            "exec"
+          ],
+          "returncode": 0,
+          "elapsed_seconds": 0.3252982000121847,
+          "stdout": "1",
+          "stderr": ""
+        },
+        "postgres_pg_isready": {
+          "status": "ok",
+          "command": [
+            "docker",
+            "compose",
+            "exec"
+          ],
+          "returncode": 0,
+          "elapsed_seconds": 0.3278037999989465,
+          "stdout": "/var/run/postgresql:5432 - accepting connections",
+          "stderr": ""
+        },
+        "redis_ping": {
+          "status": "ok",
+          "command": [
+            "docker",
+            "compose",
+            "exec"
+          ],
+          "returncode": 0,
+          "elapsed_seconds": 0.25599920004606247,
+          "stdout": "PONG",
+          "stderr": "Warning: Using a password with '-a' or '-u' option on the command line interface may not be safe."
+        }
+      },
+      "app_container_provider": {
+        "status": "ok",
+        "model_requested": "deepseek-v4-pro",
+        "expected_model": "deepseek-v4-pro",
+        "model_returned": "deepseek-v4-pro",
+        "content": "ok",
+        "finish_reason": "stop",
+        "elapsed_seconds": 5.635846355999092,
+        "usage": {
+          "completion_tokens": 42,
+          "prompt_tokens": 17,
+          "total_tokens": 59,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": null,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": null,
+            "text_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "audio_tokens": 0,
+            "cached_tokens": 0,
+            "text_tokens": 0,
+            "image_tokens": 0
+          },
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "input_tokens_details": null,
+          "claude_cache_creation_5_m_tokens": 0,
+          "claude_cache_creation_1_h_tokens": 0
+        }
+      }
+    }
+  },
+  "summary": {
+    "status": "ok",
+    "strict": true,
+    "checks_total": 15,
+    "failed_checks": [],
+    "blocked_checks": [],
+    "expected_unavailable_checks": [
+      "provider.expected_unavailable_models.deepseek-chat",
+      "provider.expected_unavailable_models.deepseek-reasoner"
+    ]
+  }
+}

@@ -21,7 +21,7 @@ from langgraph.graph import StateGraph, START, END
 load_dotenv()
 
 llm = ChatOpenAI(
-    model=os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
+    model=os.getenv("DEEPSEEK_MODEL", "deepseek-v4-pro"),
     api_key=os.getenv("DEEPSEEK_API_KEY"),
     base_url=os.getenv("DEEPSEEK_BASE_URL"),
 )

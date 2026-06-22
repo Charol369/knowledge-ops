@@ -21,7 +21,7 @@ client = OpenAI(
 
 # 3. 发起 Chat Completion 调用
 response = client.chat.completions.create(
-    model=os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
+    model=os.getenv("DEEPSEEK_MODEL", "deepseek-v4-pro"),
     messages=[
         {"role": "system", "content": "你是一个简洁的技术助理，每次最多用 50 字回答。"},
         {"role": "user", "content": "用一句话解释什么是 RAG。"},

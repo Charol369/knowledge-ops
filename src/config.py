@@ -10,12 +10,12 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     deepseek_api_key: str = ""
-    deepseek_base_url: str = "https://api.deepseek.com"
-    deepseek_model: str = "deepseek-chat"
+    deepseek_base_url: str = "https://api.deepseek.com/v1"
+    deepseek_model: str = "deepseek-v4-pro"
 
-    cheap_model: str = "deepseek-chat"
-    primary_model: str = "deepseek-chat"
-    premium_model: str = "claude-4-7"
+    cheap_model: str = "deepseek-v4-flash"
+    primary_model: str = "deepseek-v4-pro"
+    premium_model: str = "deepseek-v4-pro"
     model_router_enabled: bool = True
 
     embed_model: str = "BAAI/bge-m3"

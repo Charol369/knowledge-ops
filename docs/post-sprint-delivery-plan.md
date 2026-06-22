@@ -2,23 +2,32 @@
 
 Date: 2026-05-28
 
-Updated: 2026-06-19
+Updated: 2026-06-22
 
 ## Current State
 
 KnowledgeOps has completed the Sprint 1-5 local delivery baseline and has been pushed to GitHub.
 
-Latest pushed commit:
+Previous pushed verification commit:
 
 ```text
-e642c7c eval: add small retrieval hit benchmark
+278e102 chore: verify docker compose langfuse stack
 ```
 
 Verified local baseline:
 
 ```text
 uv run pytest -q
-# 71 passed, 3 warnings
+# 77 passed, 3 warnings
+```
+
+External interface smoke:
+
+```text
+uv run python scripts/smoke_external_interfaces.py --strict --include-container-provider --output eval/results/external_smoke_latest.json
+# summary.status=ok, checks_total=15
+# current provider exposes deepseek-v4-pro and deepseek-v4-flash
+# deepseek-chat and deepseek-reasoner are expected-unavailable on this provider
 ```
 
 Small local retrieval evaluation:
@@ -35,15 +44,17 @@ Implemented and locally verified:
 - Sprint 2: BM25, RRF hybrid retrieval, rerank boundary, query transforms, Context Builder, RAGAS dry-run scaffold, benchmark smoke.
 - Sprint 3: LangGraph research graph, graph-backed `/api/v1/query`, citation validation, structured output validation, MCP tool/resource layer.
 - Sprint 4: policy routing, cache/retry/fallback, guardrails, trace_id, business metrics, Langfuse dry-run safe path, auth, rate limit, optional memory boundary.
-- Sprint 5: `/api/v1/query/stream`, `/api/v1/feedback`, Streamlit demo, feedback capture, final docs, delivery boundary, benchmark smoke.
+- Sprint 5: `/api/v1/query/stream`, `/api/v1/feedback`, Streamlit demo, feedback capture, final docs, delivery boundary, benchmark smoke, Docker Compose local stack smoke, local Langfuse trace/score smoke, external interface smoke artifact.
 
 Known delivery boundaries:
 
-- Docker Compose full integration has not been run as a verified acceptance result.
+- Docker Compose full integration has been run locally for `app + Milvus + Langfuse web/worker + ClickHouse + Postgres + Redis + MinIO`.
 - Cloud deployment has not been completed.
 - Locust 100 QPS x 5min has not been run.
 - Real RAGAS metrics and production-scale Recall@5 have not been measured against a larger labeled QA set.
-- Real Langfuse dashboard trace and real Postgres/Redis integration have not been verified.
+- Local Langfuse trace/score landing has been verified in the Docker Compose stack; production Langfuse/Postgres/Redis persistence has not been verified.
+- Current OpenAI-compatible provider exposes `deepseek-v4-pro` / `deepseek-v4-flash`; official DeepSeek endpoint aliases `deepseek-chat` / `deepseek-reasoner` remain unavailable on this provider.
+- Real `bge-m3` Docker runtime has not been verified.
 - Demo video, resume finalization, and job applications are manual actions and have not been completed by the codebase.
 
 ## Operating Principle
@@ -52,7 +63,7 @@ Do not add new KnowledgeOps features until the project has been converted into a
 
 The next work is not another implementation Sprint. It is portfolio hardening:
 
-1. Align status documents with `e642c7c`, `71 passed`, and the 20-case hybrid `1.0` retrieval result.
+1. Keep status documents aligned with real command output: `77 passed`, Docker Compose local Langfuse trace/score smoke, external interface smoke artifact, and 20-case hybrid `1.0` retrieval result.
 2. Add implementation-boundary tables to README and architecture docs.
 3. Persist benchmark/eval outputs with `--output`.
 4. Keep query transform and rerank as optional config-gated enhancements.
@@ -133,7 +144,7 @@ Safe claims:
 - Implemented local document ingestion, FAISS dense retrieval, BM25 + RRF hybrid retrieval, context construction, artifact persistence, citation validation, MCP tools, auth/rate limiting, SSE streaming, feedback capture, and Streamlit demo.
 - Added deterministic local fallback paths so smoke tests do not require paid external models or real credentials.
 - Maintained explicit delivery boundaries for Docker, cloud deployment, QPS, RAGAS, Recall@5, and cost metrics.
-- Verified local behavior with `71` tests passing.
+- Verified local behavior with `77` tests passing.
 - Measured 20 local source/page labeled retrieval cases: dense Hit@5 / Recall@5 `0.75`, hybrid Hit@5 / Recall@5 `1.0`.
 
 Unsafe claims until measured:
@@ -243,7 +254,7 @@ Use this order unless a higher-priority blocker appears:
 3. Keep optional query transform / rerank behind default-off config flags.
 4. Add CI and wait for a real green run before adding badges.
 5. Prepare demo video script and screenshots.
-6. Only then consider Docker Compose full integration, real Langfuse, real bge-m3, RAGAS, and Locust.
+6. Only then consider real bge-m3, real RAGAS, Locust, cloud deployment, and production-grade Langfuse/Postgres/Redis hardening.
 7. Create `ts-detect-agent` repository and project 2 plan after project 1 assets are usable.
 
 ## Explicit Non-Priorities

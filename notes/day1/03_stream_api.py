@@ -34,7 +34,7 @@ def stream_llm(question: str):
         data: <内容>\n\n
     """
     stream = client.chat.completions.create(
-        model=os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
+        model=os.getenv("DEEPSEEK_MODEL", "deepseek-v4-pro"),
         messages=[{"role": "user", "content": question}],
         stream=True,
     )

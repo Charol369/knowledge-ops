@@ -143,21 +143,31 @@ Sprint 5 未测项：
 
 测试日期：2026-06-22
 
-当前 `.env` 中 OpenAI-compatible API key/base URL 可被 Docker app 读取，外部 endpoint 可返回模型列表。结论如下：
+当前 `.env` 中 OpenAI-compatible API key/base URL 可被 Docker app 读取，外部 endpoint 可返回模型列表。最新可复跑命令：
+
+```powershell
+uv run python scripts/smoke_external_interfaces.py --strict --include-container-provider --output eval/results/external_smoke_latest.json
+```
+
+结论如下：
 
 | 检查 | 结果 |
 |---|---|
-| `models.list()` | passed，返回 17 个模型 |
-| `deepseek-v4-pro` | failed，外部渠道返回 `model_not_found` |
-| `deepseek-chat` | failed，外部渠道返回 `model_not_found` |
-| `glm-4.7-flash` | passed，最小请求返回 `ok` |
+| `/models` | passed，返回 18 个模型，其中 DeepSeek 命名模型 2 个 |
+| `deepseek-v4-pro` | passed，最小请求返回 `ok` |
+| `deepseek-v4-flash` | passed，最小请求返回 `ok` |
+| Docker app container provider call | passed，容器内按 `.env` 配置调用 `deepseek-v4-pro` 返回 `ok` |
+| `deepseek-chat` | expected unavailable，当前供应商返回 `model_not_found` |
+| `deepseek-reasoner` | expected unavailable，当前供应商返回 `model_not_found` |
 
-边界：这只能证明当前 OpenAI-compatible 付费渠道可调用，不证明真实 DeepSeek 已接通。DeepSeek 相关 claim 仍需等渠道开放 `deepseek-*` 模型或切到官方 DeepSeek endpoint 后重新验证。
+该命令本轮输出 `summary.status=ok`、`checks_total=15`，并将完整结果写入 `eval/results/external_smoke_latest.json`。
+
+边界：这证明当前 OpenAI-compatible 供应商暴露的 `deepseek-v4-pro` / `deepseek-v4-flash` 可做最小 Chat Completions 调用；不证明官方 DeepSeek endpoint、`deepseek-chat` / `deepseek-reasoner` 官方别名、主链路真实付费生成、成本统计或答案质量已经完成生产验证。
 
 ## 测试环境（计划）
 
 - 单机 Docker：1 实例 KnowledgeOps + 1 Milvus standalone + 1 Langfuse
-- LLM：DeepSeek API 为目标路径；当前仅验证 OpenAI-compatible 付费渠道有其他可调用模型，DeepSeek 渠道未通过
+- LLM：当前 OpenAI-compatible 供应商的 `deepseek-v4-pro` / `deepseek-v4-flash` 最小调用已验证；主链路默认仍使用本地 deterministic fallback，成本/QPS/答案质量待真实评测
 - 嵌入：bge-m3（CPU）
 - 测试集：100 条 QA pair（covering FAQ / 知识库 / 闲聊 / 注入攻击）
 
