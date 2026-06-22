@@ -148,14 +148,23 @@ def _render_query_result(result: dict[str, Any]) -> None:
     st.subheader("Final Answer")
     st.markdown(result.get("answer") or "_No answer returned._")
 
-    meta_columns = st.columns(4)
+    meta_columns = st.columns(5)
     meta_columns[0].metric("Confidence", f"{float(result.get('confidence', 0.0)):.2f}")
     meta_columns[1].metric("Trace", result.get("trace_id") or "n/a")
     meta_columns[2].metric("Session", result.get("artifact_session_id") or "n/a")
-    meta_columns[3].metric(
+    meta_columns[3].metric("Synthesis", result.get("synthesis_mode") or "n/a")
+    meta_columns[4].metric(
         "Human Review",
         "yes" if result.get("needs_human_review") else "no",
     )
+    if result.get("synthesis_model") or result.get("synthesis_status"):
+        st.caption(
+            "synthesis_status="
+            f"{result.get('synthesis_status') or 'n/a'}; "
+            f"model={result.get('synthesis_model') or 'n/a'}"
+        )
+    if result.get("synthesis_blocked_reason"):
+        st.warning(f"LLM synthesis fallback reason: {result['synthesis_blocked_reason']}")
 
     plan = result.get("plan") or []
     if plan:

@@ -76,10 +76,10 @@ graph TD
 
 - 🔍 **研究型 Pipeline**：Planner → Retrieval Orchestrator → Synthesizer → Reporter → Verifier
 - 🧱 **认知链路 Agent 化，执行链路服务化**：检索 / 重排 / 引用校验 / 评估保持 deterministic services
-- 💸 **成本治理**：复杂度判定 + 模型路由 + 缓存 / fallback，不默认把所有请求打到最高价模型
+- 💸 **成本治理**：复杂度判定 + 模型路由 + 真实 LLM synthesis + deterministic fallback，不把失败调用伪装成成功
 - 🔌 **MCP Server**：自研协议接口，可被 Claude Desktop / Cursor / Cline 直接调用
 - 📊 **LLMOps 本地安全边界**：Langfuse dry-run-safe 接入、本地 Docker Compose Langfuse trace/score smoke、RAGAS dry-run scaffold、业务指标和 Guardrails 防护（结构化输出 + 注入检测 + 引用强制）
-- ⚡ **本地可演示交付**：FastAPI REST/SSE、Streamlit demo、反馈捕获、benchmark smoke、Docker Compose 本地全栈 smoke；云部署 / 100 QPS 压测保持手动或环境相关边界
+- ⚡ **企业知识库问答产品链路**：FastAPI REST/SSE、Streamlit 问答控制台、真实 OpenAI-compatible LLM synthesis、引用校验、反馈捕获、benchmark smoke、Docker Compose 本地全栈 smoke；云部署 / 100 QPS 压测保持手动或环境相关边界
 
 ## ✅ 实现状态边界
 
@@ -93,6 +93,7 @@ graph TD
 | BM25 sparse retrieval | 已接入 | `rank-bm25` 本地稀疏检索 |
 | RRF hybrid retrieval | 已接入 | 当前主链路核心检索策略 |
 | Context Builder | 已接入 | evidence 去重、排序、截断和上下文格式化 |
+| LLM synthesis | 已接入主链路 | `LLM_SYNTHESIS_ENABLED=true` 时调用 OpenAI-compatible Chat Completions；失败或无 key 时 deterministic fallback |
 | Citation validation | 已接入 | verifier 节点用于校验引用和 human-review flag |
 | MCP Server | 已实现并测试 | stdio server；外部 MCP client 接入属于手动验证 |
 | Query Transform | 已实现，默认关闭 | `QUERY_TRANSFORM_ENABLED=false`；开启后扩展候选查询 |
@@ -100,7 +101,7 @@ graph TD
 | Langfuse | 已接入，本地 Compose 已验证 | 默认 `.env.example` disabled；Docker Compose 中本地 trace/score 已验证，见 `docs/docker-compose-smoke.md` |
 | RAGAS | dry-run scaffold | 未运行真实 RAGAS 指标 |
 | Docker Compose | 已完成本地全量联调 | `app + Milvus + Langfuse web/worker + ClickHouse + Postgres + Redis + MinIO` 已本机 smoke |
-| Paid OpenAI-compatible API | 已验证可调用，不默认接入主链路 | 当前供应商可列 18 个模型；`deepseek-v4-pro` / `deepseek-v4-flash` 最小调用返回 `ok`；`deepseek-chat` / `deepseek-reasoner` 在当前供应商不可用 |
+| Paid OpenAI-compatible API | 已接入主链路并验证 | 当前供应商可列 18 个模型；`deepseek-v4-pro` 已在 `/api/v1/query` synthesis 主链路返回 `synthesis_mode=llm` / `synthesis_status=ok`；`deepseek-v4-flash` 最小调用通过；`deepseek-chat` / `deepseek-reasoner` 在当前供应商不可用 |
 | Locust / 100 QPS | manual boundary | 脚本存在，未运行 100 QPS x 5min |
 | Cloud deployment | manual boundary | 未声明公网部署完成 |
 
@@ -111,7 +112,7 @@ graph TD
 | 检索 Recall@5 | ≥ 85% | _待测_ | local 20-case source/page Hit@5：dense `0.75`，hybrid `1.0`；生产级 Recall@5 待测 |
 | 端到端 P95 延迟 | < 3s | _待测_ | `pending_load_test` |
 | 幻觉率（RAGAS Faithfulness） | ≤ 5% | _待测_ | `pending_real_run` |
-| 单 query 成本 | < ¥0.05 | _待测_ | _待测，本地 smoke 无真实 LLM 计费_ |
+| 单 query 成本 | < ¥0.05 | _待测_ | _待测，主链路已接真实 LLM 但未完成成本统计_ |
 | 最大并发 | ≥ 100 QPS | _待测_ | `pending_load_test` |
 
 已执行的 Sprint 5 benchmark smoke：`uv run python scripts/benchmark.py --retrieval dense,hybrid --top-k 5`，返回 `status=ok`、`documents=93`，dense/hybrid 均返回 5 条候选。小规模 retrieval eval：`uv run python scripts/evaluate_retrieval.py --dataset eval/retrieval_qa.jsonl --docs-dir data --retrieval dense,hybrid --top-k 5 --embedding-backend hash`，20 条本地 source/page 标注集上 dense Hit@5 / Recall@5 为 `0.75`，hybrid 为 `1.0`。RAGAS、P95、成本、QPS 未在本地命令中测出，详见 [docs/benchmark.md](docs/benchmark.md)。
@@ -178,6 +179,10 @@ uv run python scripts/smoke_external_interfaces.py --strict --include-container-
 ## 📚 文档
 
 - [架构设计](docs/architecture.md) - 模块说明 + 技术选型理由
+- [产品需求边界](docs/product-requirements.md) - 企业知识库问答目标、非目标、P0/P1/P2 验收标准
+- [产品工作流](docs/product-workflows.md) - 文档入库、在线问答、意图路由、评测和观测流程
+- [产品 API 契约](docs/product-api-contract.md) - 查询、流式查询、文档、反馈和诊断接口目标契约
+- [产品数据模型](docs/product-data-model.md) - 文档、chunk、ACL、query trace、feedback 和 eval 目标模型
 - [开发执行文档](docs/development.md) - 项目 1 完整实现的 `/goal` prompt + 拆分建议
 - [API 文档](docs/api.md) - REST + SSE + Pydantic schema
 - [评测报告](docs/benchmark.md) - 本地 benchmark smoke + 未测指标边界

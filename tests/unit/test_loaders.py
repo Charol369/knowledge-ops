@@ -71,6 +71,23 @@ def test_load_directory_dispatches_supported_local_documents(tmp_path: Path):
     assert all("ignored.txt" not in source for source in sources)
 
 
+def test_load_directory_skips_local_runtime_directories(tmp_path: Path):
+    html_path = tmp_path / "sample.html"
+    html_path.write_text("<body><p>Visible source document.</p></body>", encoding="utf-8")
+    runtime_dir = tmp_path / "langfuse-clickhouse"
+    runtime_dir.mkdir()
+    (runtime_dir / "internal.html").write_text(
+        "<body><p>Runtime database file, not source evidence.</p></body>",
+        encoding="utf-8",
+    )
+
+    docs = load_directory(tmp_path)
+
+    sources = {doc.metadata["source"] for doc in docs}
+    assert str(html_path) in sources
+    assert all("internal.html" not in source for source in sources)
+
+
 def test_split_recursive_uses_sprint1_overlap_alias_and_preserves_source_metadata():
     docs = [
         Document(

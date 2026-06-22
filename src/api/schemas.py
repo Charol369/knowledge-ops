@@ -35,6 +35,10 @@ class QueryResponse(BaseModel):
     plan: list[ResearchStep] = Field(default_factory=list)
     citations: list[Citation] = Field(default_factory=list)
     model_tier_used: str | None = None
+    synthesis_mode: str | None = None
+    synthesis_status: str | None = None
+    synthesis_model: str | None = None
+    synthesis_blocked_reason: str | None = None
     artifact_session_id: str | None = None
     trace_id: str | None = None
     needs_human_review: bool = False

@@ -39,6 +39,28 @@ def test_verify_citations_matches_dicts_and_documents_and_flags_unsupported():
     assert invalid == ["missing.pdf#page=9"]
 
 
+def test_extract_citations_can_attach_snippets_from_matching_evidence():
+    answer = "Grounded statement [source: docs/attention.pdf, page 2]."
+    citations = extract_citations(
+        answer,
+        evidence=[
+            {
+                "content": "Multi-head attention evidence.",
+                "source": "docs/attention.pdf",
+                "page": 2,
+            }
+        ],
+    )
+
+    assert citations == [
+        {
+            "source": "docs/attention.pdf",
+            "page": 2,
+            "snippet": "Multi-head attention evidence.",
+        }
+    ]
+
+
 def test_answer_schema_rejects_invalid_confidence():
     with pytest.raises(ValidationError):
         Answer(

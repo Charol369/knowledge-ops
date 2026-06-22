@@ -5,7 +5,7 @@ from typing import Any
 
 
 def _evidence_score(item: dict[str, Any]) -> float:
-    for key in ("rerank_score", "rrf_score", "score"):
+    for key in ("rerank_score", "lexical_score", "rrf_score", "score"):
         if key in item and item[key] is not None:
             return float(item[key])
     return 0.0
@@ -13,7 +13,7 @@ def _evidence_score(item: dict[str, Any]) -> float:
 
 def _dedupe_key(item: dict[str, Any]) -> tuple[str, str, str]:
     return (
-        str(item.get("source", "")),
+        str(item.get("source", "")).replace("\\", "/"),
         str(item.get("page", "")),
         str(item.get("content", "")).strip(),
     )

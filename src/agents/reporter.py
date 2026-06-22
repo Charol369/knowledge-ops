@@ -15,11 +15,12 @@ class Reporter:
 
 def reporter_node(state: dict[str, Any]) -> dict[str, Any]:
     answer = Reporter().render(state["question"], state.get("synthesis", ""))
+    evidence = state.get("context", {}).get("evidence", state.get("evidence", []))
     execution_path = [*state.get("execution_path", []), "reporter"]
     return {
         **state,
         "answer": answer,
-        "citations": extract_citations(answer),
+        "citations": extract_citations(answer, evidence=evidence),
         "needs_human_review": False,
         "execution_path": execution_path,
     }

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -9,6 +10,18 @@ from langchain_core.documents import Document
 
 
 SUPPORTED_SUFFIXES = {".pdf", ".docx", ".html", ".htm"}
+EXCLUDED_DIRECTORY_NAMES = {
+    "__pycache__",
+    "artifacts",
+    "faiss",
+    "langfuse-clickhouse",
+    "langfuse-clickhouse-data",
+    "langfuse-clickhouse-logs",
+    "langfuse-minio",
+    "langfuse-postgres",
+    "langfuse-redis",
+    "milvus",
+}
 
 
 def _normalize_source(path_or_url: str | Path) -> str:
@@ -95,10 +108,8 @@ def load_directory(directory: str | Path, glob: str = "**/*") -> list[Document]:
         raise ValueError(f"Expected a directory path, got: {root}")
 
     docs: list[Document] = []
-    for file_path in sorted(path for path in root.glob(glob) if path.is_file()):
+    for file_path in _iter_supported_files(root, glob=glob):
         suffix = file_path.suffix.lower()
-        if suffix not in SUPPORTED_SUFFIXES:
-            continue
         if suffix == ".pdf":
             docs.extend(load_pdf(file_path))
         elif suffix == ".docx":
@@ -106,3 +117,45 @@ def load_directory(directory: str | Path, glob: str = "**/*") -> list[Document]:
         elif suffix in {".html", ".htm"}:
             docs.extend(load_html(file_path))
     return docs
+
+
+def _iter_supported_files(root: Path, glob: str) -> list[Path]:
+    if glob == "**/*":
+        candidates: list[Path] = []
+        for current_root, dirnames, filenames in os.walk(root, topdown=True, onerror=lambda _: None):
+            dirnames[:] = [
+                dirname
+                for dirname in dirnames
+                if dirname not in EXCLUDED_DIRECTORY_NAMES
+            ]
+            current_path = Path(current_root)
+            for filename in filenames:
+                file_path = current_path / filename
+                if file_path.suffix.lower() in SUPPORTED_SUFFIXES:
+                    candidates.append(file_path)
+        return sorted(candidates)
+
+    candidates = []
+    try:
+        paths = sorted(root.glob(glob))
+    except OSError:
+        return []
+    for file_path in paths:
+        if _has_excluded_parent(file_path, root):
+            continue
+        if file_path.suffix.lower() not in SUPPORTED_SUFFIXES:
+            continue
+        try:
+            if file_path.is_file():
+                candidates.append(file_path)
+        except OSError:
+            continue
+    return candidates
+
+
+def _has_excluded_parent(path: Path, root: Path) -> bool:
+    try:
+        relative_parts = path.relative_to(root).parts
+    except ValueError:
+        relative_parts = path.parts
+    return any(part in EXCLUDED_DIRECTORY_NAMES for part in relative_parts[:-1])

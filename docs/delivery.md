@@ -14,6 +14,7 @@
 | Docker Compose full-stack smoke | 已执行 | `docker compose up -d --build`；`app`、Milvus、Langfuse、ClickHouse、Postgres、Redis、MinIO 均启动，见 `docs/docker-compose-smoke.md` |
 | Local Langfuse trace / score | 已执行 | API query + feedback 后，ClickHouse `traces` 和 `scores` 同 id 落库 |
 | External interface smoke artifact | 已执行 | `uv run python scripts/smoke_external_interfaces.py --strict --include-container-provider --output eval/results/external_smoke_latest.json`；15 个检查通过，旧别名按预期不可用 |
+| LLM synthesis 主链路 | 已执行 | `/api/v1/query` 返回 `synthesis_mode=llm`、`synthesis_status=ok`、`synthesis_model=deepseek-v4-pro`；无 key 或调用失败时 deterministic fallback |
 | CI workflow | 已补充，远端已 green | `.github/workflows/ci.yml` 覆盖 ruff、py_compile、FastAPI import smoke、pytest；GitHub Actions run `27943394914` 已通过，README badge 已允许添加 |
 | Demo dry run | 已执行 | Streamlit 本地页面和 health 返回成功；demo SSE query + feedback 路径通过，见 `docs/demo-dry-run.md` |
 | README / API / benchmark 文档 | 已更新 | 本文档与 `docs/api.md`、`docs/benchmark.md`、`README.md` |
@@ -24,7 +25,7 @@
 |---|---|---|
 | Cloud deployment | 手动边界 | 需要云账号、域名、密钥、镜像仓库或目标平台配置 |
 | Locust 100 QPS x 5min | 手动待跑 | 本次本地验证未启动长运行 API server 和 headless Locust 压测 |
-| OpenAI-compatible DeepSeek 命名模型 | 最小调用已验证 | 当前供应商可列 18 个模型；`deepseek-v4-pro` / `deepseek-v4-flash` 返回 `ok`；`deepseek-chat` / `deepseek-reasoner` 在当前供应商不可用 |
+| OpenAI-compatible DeepSeek 命名模型 | 主链路已验证 | 当前供应商可列 18 个模型；`deepseek-v4-pro` 已用于 `/api/v1/query` synthesis；`deepseek-v4-flash` 最小调用返回 `ok`；`deepseek-chat` / `deepseek-reasoner` 在当前供应商不可用 |
 | 真实 bge-m3 Docker runtime | 手动边界 | Docker app 使用 lightweight 依赖和 `hash` embedding；未下载 torch/sentence-transformers 大模型栈 |
 | 真实 RAGAS / 生产级 Recall@5 | 待真实数据集 | 当前只有 20 条本地 source/page 标注集；尚未覆盖多文档生产语料和答案质量 |
 
@@ -60,14 +61,14 @@
 - 已通过 100 QPS x 5min 压测。
 - Recall@5 达到 85% 或 RAGAS Faithfulness 达到目标。
 - 已上传 demo video、已投递岗位、已被外部平台验证。
-- 官方 DeepSeek endpoint、`deepseek-chat` / `deepseek-reasoner` 官方别名或主链路真实付费生成已完成生产验证；当前只验证了 OpenAI-compatible 供应商的 `deepseek-v4-pro` / `deepseek-v4-flash` 最小调用。
+- 官方 DeepSeek endpoint、`deepseek-chat` / `deepseek-reasoner` 官方别名、成本统计、RAGAS 答案质量、生产负载或公网部署已完成验证；当前验证的是 OpenAI-compatible 供应商上的 `deepseek-v4-pro` 主链路 synthesis 和 `deepseek-v4-flash` 最小调用。
 
 ## 后续计划边界
 
 当前不优先：
 
 - 不优先上云。
-- 不优先接真实付费 LLM。
+- 真实付费 LLM 已进入主链路；下一步不优先扩大模型供应商，而是优先做成本统计、失败降级和答案质量评测。
 - 不优先重写 Streamlit 为 Next.js。
 - 不优先做 100 QPS。
 - 不优先把项目 2 提前开工。

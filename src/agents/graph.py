@@ -33,6 +33,11 @@ class AgentState(TypedDict):
     context: dict[str, Any]
     evidence: list[dict]
     synthesis: str
+    synthesis_mode: str | None
+    synthesis_status: str | None
+    synthesis_model: str | None
+    synthesis_blocked_reason: str | None
+    synthesis_usage: dict[str, Any] | None
     answer: str
     citations: list[dict]
     confidence: float
@@ -111,6 +116,11 @@ def run_research_graph(
         "context": {},
         "evidence": list(evidence or []),
         "synthesis": "",
+        "synthesis_mode": None,
+        "synthesis_status": None,
+        "synthesis_model": None,
+        "synthesis_blocked_reason": None,
+        "synthesis_usage": None,
         "answer": "",
         "citations": [],
         "confidence": 0.0,

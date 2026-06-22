@@ -2,7 +2,12 @@
 
 W1 末骨架：先放一个 conftest.py 共享 fixture。
 """
+import os
+
 import pytest
+
+
+os.environ.setdefault("LLM_SYNTHESIS_ENABLED", "false")
 
 
 @pytest.fixture

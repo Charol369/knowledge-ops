@@ -20,12 +20,12 @@ Use these facts in resumes, interviews, README summaries, and demo scripts.
 - Implemented API key authentication, local in-memory rate limiting, guardrails, Unicode normalization, prompt-injection detection, model routing, cache/retry/fallback primitives, and business metrics.
 - Implemented MCP tool/resource layer for local retrieval and summarization services.
 - Implemented Streamlit demo that calls the backend API and displays progress, plan, answer, citations, trace/session metadata, and feedback.
-- Added explicit dry-run/local fallback boundaries so local tests do not require paid external models, real API keys, real Langfuse, real Redis/Postgres, Docker daemon, or cloud services.
+- Added explicit LLM synthesis and deterministic fallback boundaries so tests do not require paid external models, while product runtime can use the configured OpenAI-compatible provider.
 - Verified the current local baseline with `77` passing tests and `3` third-party warnings.
 - Measured a small 20-case local source/page retrieval set: dense Hit@5 / Recall@5 `0.75`, hybrid Hit@5 / Recall@5 `1.0`. This is not RAGAS or end-to-end answer-quality evaluation.
 - Verified local Docker Compose full-stack smoke on 2026-06-22: app, Milvus, Langfuse web/worker, ClickHouse, Postgres, Redis, and MinIO started locally.
 - Verified local Langfuse trace/score smoke on 2026-06-22: query trace and feedback score landed in ClickHouse under the same deterministic Langfuse trace id.
-- Verified the configured OpenAI-compatible paid endpoint can list 18 models and complete minimal Chat Completions requests with `deepseek-v4-pro` and `deepseek-v4-flash`; `deepseek-chat` and `deepseek-reasoner` are not exposed by the current provider.
+- Verified the configured OpenAI-compatible paid endpoint can list 18 models and complete Chat Completions requests with `deepseek-v4-pro` and `deepseek-v4-flash`; `/api/v1/query` now uses `deepseek-v4-pro` for LLM synthesis when enabled; `deepseek-chat` and `deepseek-reasoner` are not exposed by the current provider.
 
 ## Unsafe Claims Until Measured
 
@@ -172,7 +172,7 @@ The project uses grounded evidence, citation extraction, citation validation, st
 
 ### How is cost controlled?
 
-The project includes complexity classification, model routing, local cache, retry/fallback policy, and deterministic fallbacks. In local smoke, it avoids paid model calls by default. Minimal OpenAI-compatible provider requests were verified on 2026-06-22 with `deepseek-v4-pro` and `deepseek-v4-flash`, but the main chain still does not default to paid generation. Real cost measurement is pending real provider usage inside the main chain and Langfuse cost tracking.
+The project includes complexity classification, model routing, local cache, retry/fallback policy, LLM synthesis, and deterministic fallbacks. OpenAI-compatible provider requests were verified on 2026-06-22 with `deepseek-v4-pro` and `deepseek-v4-flash`; `/api/v1/query` now returns `synthesis_mode=llm`, `synthesis_status=ok`, and `synthesis_model=deepseek-v4-pro` when the provider is configured. Real cost measurement is still pending Langfuse/provider usage aggregation.
 
 ### What is MCP used for?
 

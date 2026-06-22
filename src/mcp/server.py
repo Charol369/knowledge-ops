@@ -43,7 +43,7 @@ def search_knowledge(
     if not evidence:
         return "status=blocked\nblocked_reason=No local evidence was retrieved."
 
-    lines = [f"status=ok", f"query={query}", "evidence:"]
+    lines = ["status=ok", f"query={query}", "evidence:"]
     for index, item in enumerate(evidence[:top_k], start=1):
         page = item.get("page")
         source = item.get("source", "")
@@ -73,7 +73,7 @@ def summarize_documents(
 
     if not evidence:
         return "status=blocked\nblocked_reason=No local evidence was retrieved."
-    synthesis = Synthesizer().synthesize(evidence)
+    synthesis = Synthesizer().synthesize(evidence, question=query)
     return Reporter().render(query, synthesis)
 
 
@@ -100,7 +100,7 @@ def inspect_collection(name: str, docs_dir: str = "data") -> str:
             "status=blocked\n"
             f"blocked_reason=Local collection inspection blocked: {exc}"
         )
-    total_bytes = sum(path.stat().st_size for path in root.glob("**/*") if path.is_file())
+    total_bytes = _loaded_source_bytes(docs)
     return "\n".join(
         [
             f"collection={name}",
@@ -111,6 +111,23 @@ def inspect_collection(name: str, docs_dir: str = "data") -> str:
             f"size_bytes={total_bytes}",
         ]
     )
+
+
+def _loaded_source_bytes(docs: list) -> int:
+    total_bytes = 0
+    seen: set[str] = set()
+    for doc in docs:
+        source = str(doc.metadata.get("source", ""))
+        if not source or source in seen:
+            continue
+        seen.add(source)
+        path = Path(source)
+        try:
+            if path.is_file():
+                total_bytes += path.stat().st_size
+        except OSError:
+            continue
+    return total_bytes
 
 
 @mcp.resource("knowledge://sessions/{session_id}")

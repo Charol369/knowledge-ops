@@ -33,7 +33,13 @@ def test_run_research_graph_executes_plan_retrieve_synthesize_report_verify(tmp_
     assert result["evidence"][0]["source"] == "fixture.md"
     assert result["context"]["evidence"][0]["source"] == "fixture.md"
     assert "fixture.md" in result["answer"]
-    assert result["citations"] == [{"source": "fixture.md", "page": 1, "snippet": None}]
+    assert result["citations"] == [
+        {
+            "source": "fixture.md",
+            "page": 1,
+            "snippet": "KnowledgeOps uses cited local evidence in Sprint 3.",
+        }
+    ]
     assert result["verification"]["status"] == "ok"
     assert result["structured_answer"]["confidence"] > 0
     assert result["artifact_session_id"]

@@ -17,14 +17,40 @@ CITATION_PATTERN = re.compile(
 )
 
 
-def extract_citations(answer_text: str) -> list[dict]:
+def extract_citations(answer_text: str, evidence: list[Any] | None = None) -> list[dict]:
     """从答案文本里抽取 [来源: X, page Y] 这种引用标记"""
     citations: list[dict[str, Any]] = []
     for match in CITATION_PATTERN.finditer(answer_text):
         source = match.group(1).strip()
         page = int(match.group(2)) if match.group(2) is not None else None
         citations.append({"source": source, "page": page, "snippet": None})
-    return citations
+    if evidence is None:
+        return citations
+    return attach_snippets(citations, evidence)
+
+
+def attach_snippets(
+    citations: list[dict],
+    evidence: list[Any],
+    max_chars: int = 260,
+) -> list[dict]:
+    enriched: list[dict[str, Any]] = []
+    used_evidence: set[int] = set()
+    seen: set[tuple[str, Any, str | None]] = set()
+    for citation in citations:
+        item = dict(citation)
+        item["snippet"] = _find_snippet(
+            citation,
+            evidence,
+            max_chars=max_chars,
+            used_evidence=used_evidence,
+        )
+        key = (_normalize_source(item.get("source", "")), item.get("page"), item.get("snippet"))
+        if key in seen:
+            continue
+        seen.add(key)
+        enriched.append(item)
+    return enriched
 
 
 def verify_citations(citations: list[dict], context_chunks: list) -> tuple[bool, list[str]]:
@@ -60,8 +86,45 @@ def _chunk_metadata(chunk: Any) -> dict[str, Any]:
     return dict(metadata) if isinstance(metadata, dict) else {}
 
 
+def _chunk_content(chunk: Any) -> str:
+    if isinstance(chunk, Document):
+        return chunk.page_content
+    if isinstance(chunk, dict):
+        return str(chunk.get("content") or chunk.get("page_content") or "")
+    return str(getattr(chunk, "page_content", "") or "")
+
+
+def _find_snippet(
+    citation: dict,
+    evidence: list[Any],
+    max_chars: int,
+    used_evidence: set[int] | None = None,
+) -> str | None:
+    source = str(citation.get("source", "")).strip()
+    page = citation.get("page")
+    fallback: str | None = None
+    fallback_index: int | None = None
+    for index, chunk in enumerate(evidence):
+        metadata = _chunk_metadata(chunk)
+        if _matches(source, page, metadata):
+            content = " ".join(_chunk_content(chunk).split())
+            if not content:
+                return None
+            snippet = content if len(content) <= max_chars else content[: max_chars - 3].rstrip() + "..."
+            if used_evidence is None or index not in used_evidence:
+                if used_evidence is not None:
+                    used_evidence.add(index)
+                return snippet
+            if fallback is None:
+                fallback = snippet
+                fallback_index = index
+    if fallback_index is not None and used_evidence is not None:
+        used_evidence.add(fallback_index)
+    return fallback
+
+
 def _matches(source: str, page: Any, metadata: dict[str, Any]) -> bool:
-    if str(metadata.get("source", "")).strip() != source:
+    if _normalize_source(metadata.get("source", "")).strip() != _normalize_source(source).strip():
         return False
     if page is None:
         return True
@@ -73,3 +136,7 @@ def _citation_key(source: str, page: Any) -> str:
     if page is None:
         return source
     return f"{source}#page={page}"
+
+
+def _normalize_source(source: Any) -> str:
+    return str(source).replace("\\", "/")

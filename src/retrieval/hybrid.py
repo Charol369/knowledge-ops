@@ -4,8 +4,12 @@ import hashlib
 from langchain_core.documents import Document
 
 
+def _normalize_source(source: object) -> str:
+    return str(source).replace("\\", "/")
+
+
 def _document_key(doc: Document) -> str:
-    source = str(doc.metadata.get("source", ""))
+    source = _normalize_source(doc.metadata.get("source", ""))
     page = str(doc.metadata.get("page", ""))
     content_hash = hashlib.sha256(doc.page_content.encode("utf-8")).hexdigest()
     return f"{source}:{page}:{content_hash}"

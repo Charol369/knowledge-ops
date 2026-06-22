@@ -157,17 +157,18 @@ uv run python scripts/smoke_external_interfaces.py --strict --include-container-
 | `deepseek-v4-pro` | passed，最小请求返回 `ok` |
 | `deepseek-v4-flash` | passed，最小请求返回 `ok` |
 | Docker app container provider call | passed，容器内按 `.env` 配置调用 `deepseek-v4-pro` 返回 `ok` |
+| `/api/v1/query` LLM synthesis | passed，`synthesis_mode=llm`、`synthesis_status=ok`、`synthesis_model=deepseek-v4-pro` |
 | `deepseek-chat` | expected unavailable，当前供应商返回 `model_not_found` |
 | `deepseek-reasoner` | expected unavailable，当前供应商返回 `model_not_found` |
 
 该命令本轮输出 `summary.status=ok`、`checks_total=15`，并将完整结果写入 `eval/results/external_smoke_latest.json`。
 
-边界：这证明当前 OpenAI-compatible 供应商暴露的 `deepseek-v4-pro` / `deepseek-v4-flash` 可做最小 Chat Completions 调用；不证明官方 DeepSeek endpoint、`deepseek-chat` / `deepseek-reasoner` 官方别名、主链路真实付费生成、成本统计或答案质量已经完成生产验证。
+边界：这证明当前 OpenAI-compatible 供应商暴露的 `deepseek-v4-pro` / `deepseek-v4-flash` 可做 Chat Completions 调用，且 `deepseek-v4-pro` 已接入 `/api/v1/query` synthesis 主链路；不证明官方 DeepSeek endpoint、`deepseek-chat` / `deepseek-reasoner` 官方别名、成本统计、RAGAS 答案质量或生产负载已经完成验证。
 
 ## 测试环境（计划）
 
 - 单机 Docker：1 实例 KnowledgeOps + 1 Milvus standalone + 1 Langfuse
-- LLM：当前 OpenAI-compatible 供应商的 `deepseek-v4-pro` / `deepseek-v4-flash` 最小调用已验证；主链路默认仍使用本地 deterministic fallback，成本/QPS/答案质量待真实评测
+- LLM：当前 OpenAI-compatible 供应商的 `deepseek-v4-pro` / `deepseek-v4-flash` 最小调用已验证；`deepseek-v4-pro` 已接入主查询 synthesis，失败或无 key 时回退 deterministic fallback；成本/QPS/答案质量待真实评测
 - 嵌入：bge-m3（CPU）
 - 测试集：100 条 QA pair（covering FAQ / 知识库 / 闲聊 / 注入攻击）
 
@@ -179,7 +180,7 @@ uv run python scripts/smoke_external_interfaces.py --strict --include-container-
 | Faithfulness | _待测_ | `pending_real_run` | ≥ 95% |
 | Answer Relevancy | _待测_ | `pending_real_run` | ≥ 90% |
 | 端到端 P95 延迟 | _待测_ | `pending_load_test` | < 3s |
-| 单 query 成本 | _待测_ | _待测，本地 smoke 无真实 LLM 计费_ | < ¥0.05 |
+| 单 query 成本 | _待测_ | _待测，主链路已接真实 LLM 但未完成成本统计_ | < ¥0.05 |
 | 最大并发 | _待测_ | `pending_load_test` | ≥ 100 QPS |
 
 ## 对比实验（Sprint 2-3）

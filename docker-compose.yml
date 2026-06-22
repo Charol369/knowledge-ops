@@ -194,6 +194,8 @@ services:
         condition: service_started
     environment:
       MILVUS_URI: http://milvus:19530
+      LLM_SYNTHESIS_ENABLED: "true"
+      LLM_SYNTHESIS_FALLBACK_ENABLED: "true"
       LANGFUSE_ENABLED: "true"
       LANGFUSE_HOST: http://langfuse-web:3000
     env_file:

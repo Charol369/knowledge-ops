@@ -132,7 +132,8 @@ graph TD
 | Langfuse | 已接入，本地 Compose 已验证 | 默认 disabled；Docker Compose 下本地 trace/score 已落库，见 `docs/docker-compose-smoke.md` |
 | RAGAS | dry-run scaffold | 未运行真实 RAGAS 指标 |
 | Docker Compose / Milvus / Langfuse stack | 已完成本地全量联调 | `app + Milvus + Langfuse web/worker + ClickHouse + Postgres + Redis + MinIO` 已本机 smoke |
-| Paid OpenAI-compatible API | 已验证可调用，不默认接入主链路 | 当前供应商可列 18 个模型；`deepseek-v4-pro` / `deepseek-v4-flash` 最小调用通过；`deepseek-chat` / `deepseek-reasoner` 在当前供应商不可用 |
+| LLM synthesis | 已接入主链路 | `LLM_SYNTHESIS_ENABLED=true` 时用 OpenAI-compatible Chat Completions 生成自然语言答案，并由 verifier 校验 citation；失败时 deterministic fallback |
+| Paid OpenAI-compatible API | 已接入主链路并验证 | 当前供应商可列 18 个模型；`deepseek-v4-pro` 已在 `/api/v1/query` synthesis 主链路返回 `synthesis_mode=llm` / `synthesis_status=ok`；`deepseek-v4-flash` 最小调用通过；`deepseek-chat` / `deepseek-reasoner` 在当前供应商不可用 |
 | Locust / 100 QPS | manual boundary | 脚本存在，未声明已压测达标 |
 | Cloud deployment | manual boundary | 未声明已公网部署 |
 
@@ -341,7 +342,7 @@ question
 | 检索 Recall@5 | ≥ 85% | 20 条本地 source/page 标注集：dense Hit@5 / Recall@5 `0.75`，hybrid `1.0`；生产级 Recall@5 待更大标注集 |
 | 端到端 P95 延迟 | < 3s | `pending_load_test`，未运行 Locust 100 QPS x 5min |
 | 幻觉率 | ≤ 5% | `pending_real_run`，未运行真实 RAGAS |
-| 单 query 成本 | < ¥0.05 | 待测，本地 smoke 无真实 LLM 计费 |
+| 单 query 成本 | < ¥0.05 | 待测，主链路已接真实 LLM 但未完成成本统计 |
 | 最大并发 | ≥ 100 QPS | `pending_load_test` |
 
 ### 额外建议跟踪指标

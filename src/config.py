@@ -30,6 +30,12 @@ class Settings(BaseSettings):
     query_transform_count: int = 3
     rerank_enabled: bool = False
     rerank_model_name: str = "BAAI/bge-reranker-v2-m3"
+    llm_synthesis_enabled: bool = True
+    llm_synthesis_timeout_seconds: float = 120.0
+    llm_synthesis_fallback_enabled: bool = True
+    llm_synthesis_max_context_chars: int = 6000
+    llm_synthesis_retry_count: int = 1
+    llm_synthesis_temperature: float = 0.0
     max_plan_steps: int = 4
     max_reflection_rounds: int = 1
 

@@ -138,6 +138,23 @@ def test_bm25_sparse_retriever_prioritizes_exact_terms_and_preserves_source():
     assert len(results) == 2
 
 
+def test_bm25_query_tokenization_ignores_question_boilerplate_and_title_stopwords():
+    docs = [
+        Document(page_content="Attention Is All You Need author list and title page.", metadata={"source": "title.md"}),
+        Document(
+            page_content="Multi-head attention consists of attention layers running in parallel.",
+            metadata={"source": "attention.md"},
+        ),
+    ]
+
+    results = BM25Retriever(docs).search(
+        "What is multi-head attention in Attention Is All You Need?",
+        k=2,
+    )
+
+    assert results[0].metadata["source"] == "attention.md"
+
+
 def test_rrf_fuses_rankings_deduplicates_and_preserves_metadata():
     shared = Document(page_content="shared transformer evidence", metadata={"source": "shared.md", "page": 2})
     dense_only = Document(page_content="dense semantic evidence", metadata={"source": "dense.md"})
