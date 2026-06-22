@@ -126,6 +126,15 @@ def _trim(text: str, limit: int = 320) -> str:
 
 def synthesizer_node(state: dict[str, Any]) -> dict[str, Any]:
     evidence = state.get("context", {}).get("evidence") or state.get("evidence", [])
+    tool_synthesis = _synthesize_tool_or_blocked_state(state)
+    if tool_synthesis is not None:
+        execution_path = [*state.get("execution_path", []), "synthesizer"]
+        return {
+            **state,
+            **tool_synthesis,
+            "execution_path": execution_path,
+        }
+
     llm_result = LLMSynthesizer().synthesize(
         question=state.get("question", ""),
         evidence=evidence,
@@ -158,3 +167,57 @@ def synthesizer_node(state: dict[str, Any]) -> dict[str, Any]:
         "synthesis_usage": llm_result.usage,
         "execution_path": execution_path,
     }
+
+
+def _synthesize_tool_or_blocked_state(state: dict[str, Any]) -> dict[str, Any] | None:
+    strategy = state.get("strategy")
+    tool_status = state.get("tool_status")
+    tool_result = state.get("tool_result") or {}
+    blocked_reason = (
+        state.get("fallback_reason")
+        or state.get("blocked_reason")
+        or tool_result.get("blocked_reason")
+    )
+
+    if strategy == "reference_count" and tool_status == "ok":
+        count = tool_result.get("count")
+        if count is None:
+            return None
+        source = str(tool_result.get("source") or "local knowledge base").replace("\\", "/")
+        page = tool_result.get("page_start")
+        citation = _citation_marker(source, page)
+        return {
+            "synthesis": (
+                f"The references section contains {count} entries according to the "
+                f"deterministic reference count tool.{citation}"
+            ),
+            "synthesis_mode": "deterministic_tool",
+            "synthesis_status": "ok",
+            "synthesis_model": None,
+            "synthesis_blocked_reason": None,
+            "synthesis_usage": None,
+        }
+
+    if tool_status == "blocked" or strategy == "blocked":
+        reason = blocked_reason or "The required evidence or document structure is unavailable."
+        return {
+            "synthesis": (
+                "This question cannot be answered from the current local knowledge base. "
+                f"Reason: {reason}"
+            ),
+            "synthesis_mode": "blocked",
+            "synthesis_status": "blocked",
+            "synthesis_model": None,
+            "synthesis_blocked_reason": reason,
+            "synthesis_usage": None,
+        }
+
+    return None
+
+
+def _citation_marker(source: str, page: Any) -> str:
+    if not source:
+        return ""
+    if page is None:
+        return f" [source: {source}]"
+    return f" [source: {source}, page {page}]"

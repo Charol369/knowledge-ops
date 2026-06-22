@@ -53,7 +53,7 @@ KnowledgeOps - 生产导向研究型 Knowledge Agent 系统
 - 基于 FastAPI + LangGraph 构建研究型 Knowledge Agent，将复杂问题拆成 plan -> retrieve -> synthesize -> report -> verify 工作流，避免把检索、引用校验、评估等确定性链路全部 agent 化。
 - 实现 PDF/Word/HTML 本地入库、FAISS dense retrieval、BM25 + RRF hybrid retrieval、Context Builder、artifact persistence、citation validation、MCP tool/resource layer，并提供 REST/SSE 查询与 Streamlit 知识库问答 UI。
 - 加入模型路由、cache/retry/fallback、API key auth、in-memory rate limit、prompt-injection guardrails、Unicode normalization、business metrics、Langfuse dry-run-safe 接入与本地 Docker Compose trace/score 验证。
-- 使用 pytest 覆盖 ingestion、retrieval、graph/API/MCP、policy、guardrails、observability、streaming、feedback、UI helper 与 external smoke helper，当前本地验证 88 tests passed；20 条本地 source/page 标注集上 hybrid Hit@5 / Recall@5 为 1.0；Docker Compose 本地 Langfuse trace/score smoke 已通过；RAGAS/QPS/P95/真实成本仍保留为待真实环境验证项。
+- 使用 pytest 覆盖 ingestion、retrieval、graph/API/MCP、policy、guardrails、observability、streaming、feedback、UI helper 与 external smoke helper，当前本地验证 112 tests passed；20 条本地 source/page 标注集上 hybrid Hit@5 / Recall@5 为 1.0；Docker Compose 本地 Langfuse trace/score smoke 已通过；RAGAS/QPS/P95/真实成本仍保留为待真实环境验证项。
 ```
 
 ## Short Resume Version
@@ -61,7 +61,7 @@ KnowledgeOps - 生产导向研究型 Knowledge Agent 系统
 Use this version when space is tight.
 
 ```text
-KnowledgeOps - 研究型 Knowledge Agent：基于 FastAPI + LangGraph 实现 plan -> retrieve -> synthesize -> report -> verify 工作流，集成 hybrid retrieval、Context Builder、citation validation、MCP、SSE streaming、feedback、auth/rate limit、guardrails、自动 session/trace、Streamlit 知识库问答 UI 和 Docker Compose 本地 Langfuse trace/score smoke；本地 pytest 88 tests passed，20 条本地 source/page 标注集上 hybrid Hit@5 / Recall@5 为 1.0，指标边界按真实 benchmark/smoke 输出记录。
+KnowledgeOps - 研究型 Knowledge Agent：基于 FastAPI + LangGraph 实现 plan -> retrieve -> synthesize -> report -> verify 工作流，集成 hybrid retrieval、Context Builder、citation validation、MCP、SSE streaming、feedback、auth/rate limit、guardrails、自动 session/trace、Streamlit 知识库问答 UI 和 Docker Compose 本地 Langfuse trace/score smoke；本地 pytest 112 tests passed，20 条本地 source/page 标注集上 hybrid Hit@5 / Recall@5 为 1.0，指标边界按真实 benchmark/smoke 输出记录。
 ```
 
 ## 5-Minute Project Explanation
@@ -148,7 +148,7 @@ LangGraph graph 使用固定研究流程，不是教学式的泛 Agent demo。
 - Streamlit 知识库问答 UI 展示 question、progress、plan、answer、citations、trace/session 和 feedback；普通用户不需要手动填写 trace ID；
 - MCP server 暴露 retrieval/summarization 能力。
 
-当前本地验证是 `88 tests passed`，benchmark smoke 能跑 dense/hybrid retrieval 并返回 top-5 evidence。当前 20 条本地 source/page 标注集上 dense Hit@5 / Recall@5 为 `0.75`，hybrid Hit@5 / Recall@5 为 `1.0`。
+当前本地验证是 `112 tests passed`，benchmark smoke 能跑 dense/hybrid retrieval 并返回 top-5 evidence。当前 20 条本地 source/page 标注集上 dense Hit@5 / Recall@5 为 `0.75`，hybrid Hit@5 / Recall@5 为 `1.0`。
 
 但我不会声称生产 Recall@5、RAGAS、P95、QPS 或成本已经达标，因为这些需要更大标注集、真实模型/观测配置、真实评估命令和压测环境。
 
@@ -182,7 +182,7 @@ MCP exposes retrieval and summarization capabilities as standard tools/resources
 
 Measured:
 
-- local tests: `107 passed, 3 warnings`;
+- local tests: `112 passed, 3 warnings`;
 - benchmark smoke: dense/hybrid top-5 retrieval returns evidence from local data;
 - small local retrieval eval: dense Hit@5 / Recall@5 `0.75`, hybrid Hit@5 / Recall@5 `1.0` on 20 source/page labeled cases;
 - local API/Streamlit/feedback/streaming smoke.

@@ -92,6 +92,9 @@ graph TD
 | Reference count tool | 已接入 | `reference_count_tool` 确定性计数；失败时返回 precise blocked reason |
 | Section lookup tool | 已接入 | `section_lookup_tool` 先定位 section evidence；缺失时 blocked，不用无关 top-k 代答 |
 | Table query boundary | 已接入 blocked path | P0 不解析表格；返回 table parser/index unavailable，不编造表格内容 |
+| Deterministic tool answer pinning | 已接入 | reference count 成功时最终回答固定使用 `tool_result.count`；blocked path 跳过 LLM 覆盖 |
+| Streamlit advanced diagnostics | 已接入 | 高级折叠区展示 `intent`、`strategy`、`tool_status`、`fallback_reason`、`tool_result` |
+| P0 intent QA regression | 已接入 | `eval/intent_qa.jsonl` + `scripts/evaluate_intent_qa.py --output`，5/5 本地回归通过 |
 | `/api/v1/feedback` | 已接入 | 本地内存捕获；Docker Compose 本地 Langfuse score 已验证 |
 | PDF / Word / HTML ingest | 已接入 | 本地 loader + splitter，保留 source/page metadata |
 | FAISS dense retrieval | 已接入 | 默认本地可跑；测试默认使用 hash embedding |
@@ -215,7 +218,7 @@ uv run python scripts/smoke_external_interfaces.py --strict --include-container-
 | **Sprint 4** | W5 (6/15-6/21) | Policy Layer + LLMOps | Done，本地 dry-run / smoke |
 | **Sprint 5** | W6 (6/22-6/30) | Streaming、feedback、demo、benchmark、docs、Docker Compose local smoke | 本地完成；Docker Compose + 本地 Langfuse trace/score 已验证；云部署、视频、申请为手动边界 |
 
-当前本地验证基线：`uv run pytest -q` 返回 `107 passed, 3 warnings`；`uv run ruff check src tests frontend\app.py` 返回 `All checks passed!`。warnings 来自 FAISS/SWIG 第三方类型。
+当前本地验证基线：`uv run pytest -q` 返回 `112 passed, 3 warnings`；`uv run ruff check src tests frontend\app.py` 返回 `All checks passed!`。warnings 来自 FAISS/SWIG 第三方类型。
 
 ## 📂 目录结构
 

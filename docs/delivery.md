@@ -9,6 +9,9 @@
 | `/api/v1/query/stream` | 已实现 | `uv run pytest tests/integration/test_streaming.py` |
 | `/api/v1/feedback` | 已实现 | `uv run pytest tests/integration/test_feedback.py` |
 | Streamlit knowledge QA UI | 已实现 | 普通用户自动 session/trace；手动 trace/thread 覆盖在高级调试设置；`uv run pytest tests/integration/test_frontend_demo.py`，`uv run python -m py_compile frontend/app.py` |
+| Intent-aware QA diagnostics | 已实现 | API/SSE 返回 `intent`、`strategy`、`tool_*`、`fallback_reason`；Streamlit advanced diagnostics 展示这些字段 |
+| Deterministic tool answer pinning | 已实现 | reference count 最终答案固定使用 `tool_result.count`；table/no-answer blocked path 不被 LLM 覆盖 |
+| P0 intent QA regression | 已执行 | `uv run python scripts/evaluate_intent_qa.py --dataset eval/intent_qa.jsonl --docs-dir data --index-dir data/faiss/sprint1 --embedding-backend hash --output eval/results/intent_qa_latest.json` 返回 5/5 passed |
 | Final benchmark smoke | 已执行 | `uv run python scripts/benchmark.py --retrieval dense,hybrid --top-k 5 --output eval/results/benchmark_latest.json` |
 | Small retrieval eval | 已执行 | `uv run python scripts/evaluate_retrieval.py --dataset eval/retrieval_qa.jsonl --docs-dir data --retrieval dense,hybrid --top-k 5 --embedding-backend hash --output eval/results/retrieval_latest.json` |
 | Docker Compose full-stack smoke | 已执行 | `docker compose up -d --build`；`app`、Milvus、Langfuse、ClickHouse、Postgres、Redis、MinIO 均启动，见 `docs/docker-compose-smoke.md` |

@@ -56,6 +56,14 @@ def verifier_node(state: dict[str, Any]) -> dict[str, Any]:
         citations=state.get("citations", []),
         evidence=state.get("context", {}).get("evidence", state.get("evidence", [])),
     )
+    if state.get("tool_status") == "blocked" or state.get("strategy") == "blocked":
+        verification = {
+            **verification,
+            "status": "blocked",
+            "confidence": 0.0,
+            "needs_human_review": True,
+            "blocked_reason": state.get("fallback_reason") or state.get("blocked_reason"),
+        }
     business_metrics.record_citation_verification(
         verified=verification.get("status") == "ok",
         needs_human_review=bool(verification.get("needs_human_review", True)),

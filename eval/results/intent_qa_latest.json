@@ -1,0 +1,181 @@
+{
+  "status": "ok",
+  "cases_total": 5,
+  "cases_passed": 5,
+  "cases_failed": 0,
+  "latency_seconds": 2.442070299992338,
+  "docs_dir": "data",
+  "index_dir": "data\\faiss\\sprint1",
+  "embedding_backend": "hash",
+  "notes": [
+    "Deterministic P0 intent/workflow regression.",
+    "LLM synthesis is disabled for this regression; this is not a RAGAS or answer-quality judge."
+  ],
+  "results": [
+    {
+      "id": "intent-definition-001",
+      "question": "What is multi-head attention in Attention Is All You Need?",
+      "passed": true,
+      "failures": [],
+      "observed": {
+        "intent": "definition",
+        "strategy": "hybrid_retrieval",
+        "tool_name": null,
+        "tool_status": null,
+        "tool_result": null,
+        "fallback_reason": null,
+        "synthesis_mode": "deterministic_fallback",
+        "synthesis_status": "disabled",
+        "needs_human_review": false,
+        "citations": [
+          {
+            "source": "data/attention_is_all_you_need.pdf",
+            "page": 4,
+            "snippet": "output values. These are concatenated and once again projected, resulting in the final values, as depicted in Figure 2. Multi-head attention allows the model to jointly attend to information from different representation subspaces at different positions. Wi..."
+          },
+          {
+            "source": "data/attention_is_all_you_need.pdf",
+            "page": 3,
+            "snippet": "Scaled Dot-Product Attention Multi-Head Attention Figure 2: (left) Scaled Dot-Product Attention. (right) Multi-Head Attention consists of several attention layers running in parallel. of the values, where the weight assigned to each value is computed by a c..."
+          },
+          {
+            "source": "data/attention_is_all_you_need.pdf",
+            "page": 4,
+            "snippet": "i ∈ Rdmodel×dk, W K i ∈ Rdmodel×dk, W V i ∈ Rdmodel×dv and W O ∈ Rhdv×dmodel. In this work we employ h = 8 parallel attention layers, or heads. For each of these we use dk = dv = dmodel/h = 64. Due to the reduced dimension of each head, the total computatio..."
+          }
+        ],
+        "answer_preview": "Question: What is multi-head attention in Attention Is All You Need?\n\nAnswer grounded in local evidence:\n1. Multi-head attention allows the model to jointly attend to information from different representation subspaces at different positions. [source: data/attention_is_all_you_need.pdf, page 4]\n2. (right) Multi-Head Attention consists of several attention layers running in parallel. [source: data/attention_is_all_you_need.pdf, page 3]\n3. In this work we employ h = 8 parallel attention layers, or"
+      }
+    },
+    {
+      "id": "intent-count-001",
+      "question": "How many references are in Attention Is All You Need?",
+      "passed": true,
+      "failures": [],
+      "observed": {
+        "intent": "count",
+        "strategy": "reference_count",
+        "tool_name": "reference_count_tool",
+        "tool_status": "ok",
+        "tool_result": {
+          "status": "ok",
+          "count": 40,
+          "source": "data/attention_is_all_you_need.pdf",
+          "page_start": 9,
+          "page_end": 14,
+          "evidence": [
+            {
+              "content": "Deterministic reference count: 40. The references section was located in data/attention_is_all_you_need.pdf.",
+              "source": "data/attention_is_all_you_need.pdf",
+              "page": 9,
+              "tool": "reference_count_tool",
+              "reference_count": 40
+            }
+          ],
+          "blocked_reason": null
+        },
+        "fallback_reason": null,
+        "synthesis_mode": "deterministic_tool",
+        "synthesis_status": "ok",
+        "needs_human_review": false,
+        "citations": [
+          {
+            "source": "data/attention_is_all_you_need.pdf",
+            "page": 9,
+            "snippet": "Deterministic reference count: 40. The references section was located in data/attention_is_all_you_need.pdf."
+          }
+        ],
+        "answer_preview": "Question: How many references are in Attention Is All You Need?\n\nAnswer grounded in local evidence:\nThe references section contains 40 entries according to the deterministic reference count tool. [source: data/attention_is_all_you_need.pdf, page 9]"
+      }
+    },
+    {
+      "id": "intent-section-001",
+      "question": "Summarize section 3.2 in Attention Is All You Need.",
+      "passed": true,
+      "failures": [],
+      "observed": {
+        "intent": "section_summary",
+        "strategy": "section_lookup",
+        "tool_name": "section_lookup_tool",
+        "tool_status": "ok",
+        "tool_result": {
+          "status": "ok",
+          "section_id": "3.2",
+          "section_title": "3.2 Attention",
+          "page_start": 2,
+          "page_end": 4,
+          "evidence": [
+            {
+              "content": "3.2 Attention An attention function can be described as mapping a query and a set of key-value pairs to an output, where the query, keys, values, and output are all vectors. The output is computed as a weighted sum 3 Scaled Dot-Product Attention Multi-Head Attention Figure 2: (left) Scaled Dot-Product Attention. (right) Multi-Head Attention consists of several attention layers running in parallel. of the values, where the weight assigned to each value is computed by a compatibility function of the query with the corresponding key. 3.2.1 Scaled Dot-Product Attention We call our particular attention \"Scaled Dot-Product Attention\" (Figure 2). The input consists of queries and keys of dimension dk, and values of dimension dv. We compute the dot products of the query with all keys, divide each by √dk, and apply a softmax function to obtain the weights on the values. In practice, we compute the attention function on a set of queries simultaneously, packed together into a matrix Q. The keys and values are also packed together into matrices K and V . We compute the matrix of outputs as: Attention(Q, K, V ) = softmax( QK T √dk )V (1) The two most commonly used attention functions are additive attention [2], and dot-product (multi- plicative) attention. Dot-product attention is identical to our algorithm, except for the scaling factor of 1√dk . Additive attention computes the compatibility function using a feed-forward network with a single hidden layer. While the two are similar in theoretical complexity, dot-product attention is much faster and more space-efficient in practice, since it can be implemented using highly optimized matrix multiplication code. While for small values of dk the two mechanisms perform similarly, additive attention outperforms dot product attention with",
+              "source": "data/attention_is_all_you_need.pdf",
+              "page": 2,
+              "section_id": "3.2",
+              "section_title": "3.2 Attention",
+              "tool": "section_lookup_tool"
+            }
+          ],
+          "blocked_reason": null
+        },
+        "fallback_reason": null,
+        "synthesis_mode": "deterministic_fallback",
+        "synthesis_status": "disabled",
+        "needs_human_review": false,
+        "citations": [
+          {
+            "source": "data/attention_is_all_you_need.pdf",
+            "page": 2,
+            "snippet": "3.2 Attention An attention function can be described as mapping a query and a set of key-value pairs to an output, where the query, keys, values, and output are all vectors. The output is computed as a weighted sum 3 Scaled Dot-Product Attention Multi-Head..."
+          }
+        ],
+        "answer_preview": "Question: Summarize section 3.2 in Attention Is All You Need.\n\nAnswer grounded in local evidence:\n1. The input consists of queries and keys of dimension dk, and values of dimension dv. [source: data/attention_is_all_you_need.pdf, page 2]"
+      }
+    },
+    {
+      "id": "intent-table-001",
+      "question": "What does Table 2 show?",
+      "passed": true,
+      "failures": [],
+      "observed": {
+        "intent": "table_query",
+        "strategy": "table_lookup",
+        "tool_name": "table_lookup_tool",
+        "tool_status": "blocked",
+        "tool_result": {
+          "status": "blocked",
+          "blocked_reason": "Table parsing/indexing is not available in the current P0 local index.",
+          "evidence": []
+        },
+        "fallback_reason": "Table parsing/indexing is not available in the current P0 local index.",
+        "synthesis_mode": "blocked",
+        "synthesis_status": "blocked",
+        "needs_human_review": true,
+        "citations": [],
+        "answer_preview": "Question: What does Table 2 show?\n\nAnswer grounded in local evidence:\nThis question cannot be answered from the current local knowledge base. Reason: Table parsing/indexing is not available in the current P0 local index."
+      }
+    },
+    {
+      "id": "intent-no-answer-001",
+      "question": "What was the author's private salary?",
+      "passed": true,
+      "failures": [],
+      "observed": {
+        "intent": "no_answer",
+        "strategy": "blocked",
+        "tool_name": null,
+        "tool_status": "blocked",
+        "tool_result": {
+          "status": "blocked",
+          "blocked_reason": "The request cannot be answered from the available knowledge base.",
+          "evidence": []
+        },
+        "fallback_reason": "The request cannot be answered from the available knowledge base.",
+        "synthesis_mode": "blocked",
+        "synthesis_status": "blocked",
+        "needs_human_review": true,
+        "citations": [],
+        "answer_preview": "Question: What was the author's private salary?\n\nAnswer grounded in local evidence:\nThis question cannot be answered from the current local knowledge base. Reason: The request cannot be answered from the available knowledge base."
+      }
+    }
+  ],
+  "dataset": "eval\\intent_qa.jsonl"
+}

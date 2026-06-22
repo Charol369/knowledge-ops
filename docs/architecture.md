@@ -122,6 +122,10 @@ graph TD
 | `/api/v1/query` | 已接入主链路 | 调用 graph-backed 查询 |
 | `/api/v1/query/stream` | 已接入主链路 | 有界 SSE wrapper，复用 query 合约 |
 | Streamlit 知识库问答 UI | 已接入主链路 | 自动生成产品 `session_id`；手动 `thread_id` 仅保留在高级调试设置 |
+| Intent-aware QA routing | 已接入主链路 | deterministic intent router 先分类 `definition/count/section/table/no_answer`，再选择 retrieval/tool/blocked strategy |
+| Deterministic document tools | 已接入主链路 | reference count 与 section lookup 由代码执行；table query 在 P0 明确 blocked，不用无关 top-k 代答 |
+| Deterministic tool answer pinning | 已接入主链路 | reference count 最终答案固定使用 `tool_result.count`；blocked path 不允许 LLM 覆盖成 unsupported answer |
+| P0 intent QA regression | 已接入 eval | `eval/intent_qa.jsonl` + `scripts/evaluate_intent_qa.py --output`，5 条 deterministic workflow case 通过 |
 | `/api/v1/feedback` | 已接入主链路 | 本地指标记录；Docker Compose 本地 Langfuse score 已验证 |
 | FAISS dense retrieval | 已接入主链路 | 默认本地 smoke 使用 hash embedding |
 | BM25 sparse retrieval | 已接入主链路 | 关键词/术语召回补充 |
@@ -138,7 +142,7 @@ graph TD
 | Locust / 100 QPS | manual boundary | 脚本存在，未声明已压测达标 |
 | Cloud deployment | manual boundary | 未声明已公网部署 |
 
-当前默认查询链路是：`question -> planner -> dense + BM25 -> RRF -> Context Builder -> synthesize/report -> citation verification`。Query Transform 和 Cross-Encoder Rerank 是可选增强层，不是默认 smoke 的必要条件。
+当前默认查询链路是：`question -> intent_router -> planner -> retrieval_orchestrator/tool dispatch -> Context Builder -> synthesize/report -> citation verification`。普通 definition/list/compare/unknown 问题走 dense + BM25 + RRF；reference count、section lookup、table/no-answer blocked path 走确定性工具或明确 blocked。Query Transform 和 Cross-Encoder Rerank 是可选增强层，不是默认 smoke 的必要条件。
 
 ---
 

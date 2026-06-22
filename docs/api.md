@@ -59,7 +59,18 @@
   "citations": [
     {"source": "data\\attention_is_all_you_need.pdf", "page": 1, "snippet": "..."}
   ],
+  "intent": "definition",
+  "strategy": "hybrid_retrieval",
+  "intent_confidence": 0.82,
+  "tool_name": null,
+  "tool_status": null,
+  "tool_result": null,
+  "fallback_reason": null,
+  "diagnostics": {"strategy": "hybrid_retrieval"},
   "model_tier_used": "tier2",
+  "synthesis_mode": "llm",
+  "synthesis_status": "ok",
+  "synthesis_model": "deepseek-v4-pro",
   "session_id": "sess_local_ui",
   "artifact_session_id": "...",
   "trace_id": "f1d2d2f924e986ac86fdf7b36c94bcdf",
@@ -67,6 +78,16 @@
 }
 ```
 
+
+Intent/tool response behavior:
+
+| Path | Response behavior |
+|---|---|
+| `definition` / normal retrieval | Uses hybrid retrieval and LLM synthesis when configured; fallback remains deterministic and cited. |
+| `reference_count` success | Final answer is pinned to `tool_result.count`; LLM cannot override the deterministic count. |
+| `section_lookup` success | Evidence is scoped to the requested section before synthesis/fallback. |
+| `table_lookup` blocked | Returns `tool_status="blocked"`, visible `fallback_reason`, empty citations, and `needs_human_review=true`; it does not hallucinate table content. |
+| `no_answer` / blocked | Returns a cannot-answer response with a precise reason and human-review flag. |
 Session / trace behavior:
 
 | Field | Behavior |
@@ -88,7 +109,7 @@ event: progress
 data: {"stage":"started","trace_id":"f1d2d2f924e986ac86fdf7b36c94bcdf","message":"Query accepted."}
 
 event: progress
-data: {"stage":"graph_completed","trace_id":"f1d2d2f924e986ac86fdf7b36c94bcdf","plan":[...],"citations_count":5,"artifact_session_id":"..."}
+data: {"stage":"graph_completed","trace_id":"f1d2d2f924e986ac86fdf7b36c94bcdf","intent":"count","strategy":"reference_count","tool_name":"reference_count_tool","tool_status":"ok","plan":[...],"citations_count":1,"artifact_session_id":"..."}
 
 event: completion
 data: {"answer":"...","confidence":0.8,"plan":[...],"citations":[...],"session_id":"sess_local_ui","trace_id":"f1d2d2f924e986ac86fdf7b36c94bcdf",...}

@@ -139,8 +139,8 @@ Current gap:
 No ACL filtering.
 No production embedding/rerank verification.
 No persisted query trace store beyond artifacts/local metrics.
-No Streamlit diagnostics panel for intent/tool fields yet.
-No P0 intent eval artifact yet.
+Streamlit diagnostics panel exists for intent/tool/fallback fields, but no persistent query trace table exists yet.
+P0 intent eval artifact exists for 5 deterministic workflow cases; larger product QA eval set remains P1.
 ```
 
 ## 5. Intent-based Workflows
@@ -411,6 +411,6 @@ P0 workflow enhancement is complete when:
 Current implementation boundary:
 
 ```text
-Task 1-5 are implemented: API/graph schema, deterministic router, reference count tool, section lookup tool, table blocked path, and graph strategy dispatch.
-Task 6-10 remain pending: final answer pinning for tool results, UI diagnostics display, P0 intent eval artifact, docs finalization, commit/push.
+Task 1-8 are implemented: API/graph schema, deterministic router, reference count tool, section lookup tool, table blocked path, graph strategy dispatch, deterministic tool-result answer pinning, Streamlit advanced diagnostics, and P0 intent eval artifact.
+Task 9-10 remain pending until final docs sync, validation, commit, and push are complete.
 ```

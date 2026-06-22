@@ -19,7 +19,7 @@ Implement the P0 intent-aware QA core described in `docs/p0-intent-routing-desig
 The implementation must keep the current verified baseline stable:
 
 ```text
-107 passed, 3 warnings
+112 passed, 3 warnings
 ruff: All checks passed
 main pushed through 308222a
 ```

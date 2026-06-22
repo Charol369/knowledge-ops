@@ -111,6 +111,19 @@ Sprint 5 未测项：
 
 边界：这是 source/page 命中率，不是答案质量评估；只覆盖 `attention_is_all_you_need.pdf` 的 20 条本地标注问题；`hash` embedding 用于本地确定性评估，不代表 `bge-m3` 真实语义检索质量。
 
+
+## P0 Intent-Aware QA Regression
+
+测试日期：2026-06-22
+
+测试环境：Windows 本地开发环境，Python 3.11.15，`uv run`，本地样本目录 `data`，数据集 `eval/intent_qa.jsonl`，embedding backend `hash`。该回归默认关闭 LLM synthesis，用 deterministic/fallback 路径验证 intent、strategy、tool status、tool result、citations 和 blocked behavior；它不是 RAGAS 或 LLM-as-judge 答案质量评测。
+
+| 命令 | 结果 | 本地输出来源 |
+|---|---:|---|
+| `uv run python scripts/evaluate_intent_qa.py --dataset eval/intent_qa.jsonl --docs-dir data --index-dir data/faiss/sprint1 --embedding-backend hash --output eval/results/intent_qa_latest.json` | `5/5` passed | 输出 `status=ok`，覆盖 definition、reference count、section lookup、table blocked、no-answer blocked，并写入 `eval/results/intent_qa_latest.json` |
+
+边界：该评测证明 P0 intent-aware workflow 可以本地复跑，不代表真实 LLM 答案质量、RAGAS faithfulness、生产 Recall@5、成本或负载指标。
+
 ## Docker Compose + Local Langfuse Smoke
 
 测试日期：2026-06-22

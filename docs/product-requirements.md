@@ -35,7 +35,7 @@ KnowledgeOps 的下一阶段目标是从单路径 RAG 问答升级为真实企�
 | Feedback | `/api/v1/feedback` + 本地 Langfuse score smoke | docs/docker-compose-smoke.md |
 | Docker local stack | app + Milvus + Langfuse + ClickHouse + Postgres + Redis + MinIO 本地 smoke | docs/docker-compose-smoke.md |
 | CI | GitHub Actions green | README badge / Actions run |
-| Tests | 当前本地测试通过 | `107 passed, 3 warnings` |
+| Tests | 当前本地测试通过 | `112 passed, 3 warnings` |
 
 当前不能声明为已完成：
 
@@ -206,9 +206,9 @@ Step 7 task breakdown: docs/p0-implementation-plan.md
 | P0-R3 | Reference count tool | 已完成：counts references deterministically or returns precise blocked reason |
 | P0-R4 | Section lookup tool | 已完成：locates numbered section evidence or returns precise blocked reason |
 | P0-R5 | Automatic session/trace | 已完成：normal UI 自动生成 `session_id`；API 自动生成单次请求 `trace_id`；旧 `thread_id` 仅作为调试覆盖 |
-| P0-R6 | API diagnostics | 已完成 API/SSE response fields；Streamlit diagnostics display 留到 Task 7 |
-| P0-R7 | LLM synthesis stability | structured output + local citation rendering; fallback reason surfaced |
-| P0-R8 | Regression tests | Task 1-5 unit/integration tests 已补；P0 eval artifact 留到 Task 8 |
+| P0-R6 | API diagnostics | 已完成 API/SSE response fields；Streamlit advanced diagnostics 展示 intent/strategy/tool/fallback |
+| P0-R7 | LLM synthesis stability | structured output + local citation rendering；reference count 结果已由 deterministic tool answer pinning 固定，blocked path 不被 LLM 覆盖 |
+| P0-R8 | Regression tests | Task 1-8 unit/integration tests 已补；P0 intent eval artifact 5/5 通过 |
 
 ### P1 Requirements
 
@@ -293,6 +293,6 @@ P0 is complete only when all are true:
 Current P0 boundary:
 
 ```text
-Task 1-5 are implemented and tested.
-Task 6-10 remain pending: deterministic tool-result answer pinning, UI diagnostics display, intent eval artifact, final status sync, commit/push.
+Task 1-8 are implemented and tested.
+Task 9-10 remain pending until final validation, docs closure, commit, and push are complete.
 ```

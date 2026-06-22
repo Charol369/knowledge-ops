@@ -34,3 +34,26 @@ def test_ui_generates_product_session_id():
 
     assert session_id.startswith("sess_")
     assert len(session_id) == 37
+
+
+def test_ui_extracts_advanced_diagnostics_summary():
+    summary = frontend_app.extract_diagnostics_summary(
+        {
+            "intent": "count",
+            "strategy": "reference_count",
+            "tool_status": "ok",
+            "synthesis_mode": "deterministic_tool",
+            "diagnostics": {
+                "tool_name": "reference_count_tool",
+                "fallback_reason": None,
+            },
+        }
+    )
+
+    assert summary == {
+        "intent": "count",
+        "strategy": "reference_count",
+        "tool_name": "reference_count_tool",
+        "tool_status": "ok",
+        "synthesis_mode": "deterministic_tool",
+    }

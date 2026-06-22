@@ -100,6 +100,33 @@ def test_run_research_graph_routes_reference_count_tool(tmp_path: Path):
     assert result["tool_status"] == "ok"
     assert result["tool_result"]["count"] == 2
     assert result["evidence"][0]["reference_count"] == 2
+    assert result["synthesis_mode"] == "deterministic_tool"
+    assert "2" in result["answer"]
+
+
+def test_run_research_graph_blocks_table_query_without_llm_override(tmp_path: Path):
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    (docs_dir / "paper.html").write_text(
+        "<body><p>Table caption exists but no structured table index.</p></body>",
+        encoding="utf-8",
+    )
+
+    result = run_research_graph(
+        question="What does Table 2 show?",
+        docs_dir=docs_dir,
+        index_dir=tmp_path / "index",
+        artifact_root=tmp_path / "artifacts",
+    )
+
+    assert result["intent"] == "table_query"
+    assert result["strategy"] == "table_lookup"
+    assert result["tool_name"] == "table_lookup_tool"
+    assert result["tool_status"] == "blocked"
+    assert result["synthesis_mode"] == "blocked"
+    assert "cannot be answered" in result["answer"]
+    assert "Table parsing/indexing is not available" in result["answer"]
+    assert result["needs_human_review"] is True
 
 
 def test_retrieval_orchestrator_optional_transform_and_rerank_fallback(tmp_path: Path, monkeypatch):

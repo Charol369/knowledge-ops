@@ -104,6 +104,28 @@ def post_feedback(
     return response.json()
 
 
+def extract_diagnostics_summary(result: dict[str, Any]) -> dict[str, Any]:
+    diagnostics = result.get("diagnostics") if isinstance(result.get("diagnostics"), dict) else {}
+    keys = (
+        "intent",
+        "strategy",
+        "tool_name",
+        "tool_status",
+        "fallback_reason",
+        "synthesis_mode",
+        "synthesis_status",
+        "synthesis_model",
+    )
+    summary: dict[str, Any] = {}
+    for key in keys:
+        value = result.get(key)
+        if value is None:
+            value = diagnostics.get(key)
+        if value is not None:
+            summary[key] = value
+    return summary
+
+
 def _apply_page_style() -> None:
     st.markdown(
         """
@@ -172,6 +194,21 @@ def _render_query_result(result: dict[str, Any]) -> None:
         )
     if result.get("synthesis_blocked_reason"):
         st.warning(f"LLM synthesis fallback reason: {result['synthesis_blocked_reason']}")
+    diagnostics_summary = extract_diagnostics_summary(result)
+    if diagnostics_summary or result.get("tool_result") or result.get("diagnostics"):
+        with st.expander("Advanced diagnostics", expanded=False):
+            if diagnostics_summary:
+                st.dataframe(
+                    [{"field": key, "value": value} for key, value in diagnostics_summary.items()],
+                    use_container_width=True,
+                    hide_index=True,
+                )
+            if result.get("tool_result") is not None:
+                st.caption("tool_result")
+                st.json(result["tool_result"])
+            if result.get("diagnostics") is not None:
+                st.caption("raw diagnostics")
+                st.json(result["diagnostics"])
 
     plan = result.get("plan") or []
     if plan:
