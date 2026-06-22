@@ -4,6 +4,7 @@
 > 自研 MCP Server 暴露能力为标准协议，Claude Desktop / Cursor / Cline 可直接调用；通过模型路由与缓存做成本控制，而不是默认把所有请求打到最贵模型。
 
 [![Status](https://img.shields.io/badge/status-Sprint%205%20local%20smoke-blue.svg)](#-开发进度-sprint-看板)
+[![CI](https://github.com/Charol369/knowledge-ops/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Charol369/knowledge-ops/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11-3776AB.svg)](https://www.python.org/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-1.x-1C3C3C.svg)](https://langchain-ai.github.io/langgraph/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)

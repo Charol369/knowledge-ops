@@ -45,7 +45,7 @@ Implemented and locally verified:
 - Sprint 3: LangGraph research graph, graph-backed `/api/v1/query`, citation validation, structured output validation, MCP tool/resource layer.
 - Sprint 4: policy routing, cache/retry/fallback, guardrails, trace_id, business metrics, Langfuse dry-run safe path, auth, rate limit, optional memory boundary.
 - Sprint 5: `/api/v1/query/stream`, `/api/v1/feedback`, Streamlit demo, feedback capture, final docs, delivery boundary, benchmark smoke, Docker Compose local stack smoke, local Langfuse trace/score smoke, external interface smoke artifact.
-- Portfolio hardening: CI workflow has been supplemented with ruff, py_compile, FastAPI import smoke, and pytest; local equivalent commands passed. README CI badge must only be added after a real GitHub Actions green run.
+- Portfolio hardening: CI workflow has been supplemented with ruff, py_compile, FastAPI import smoke, and pytest; local equivalent commands passed. GitHub Actions run `27943394914` passed, so the README CI badge is evidence-backed.
 - Demo dry run: bounded local Streamlit page load, SSE query path, and feedback path passed; see `docs/demo-dry-run.md`.
 
 Known delivery boundaries:
