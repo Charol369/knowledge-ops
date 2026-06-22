@@ -66,8 +66,12 @@ def test_query_stream_emits_ordered_progress_and_completion_events(tmp_path: Pat
     assert started["trace_id"] == "stream-thread"
     assert graph_completed["stage"] == "graph_completed"
     assert graph_completed["trace_id"] == "stream-thread"
+    assert graph_completed["intent"] == "unknown"
+    assert graph_completed["strategy"] == "hybrid_retrieval"
     assert len(graph_completed["plan"]) >= 2
     assert completion["trace_id"] == "stream-thread"
+    assert completion["intent"] == "unknown"
+    assert completion["strategy"] == "hybrid_retrieval"
     assert completion["answer"]
     assert completion["citations"][0]["source"].endswith("sample.html")
     assert completion["needs_human_review"] is False
@@ -103,6 +107,45 @@ def test_query_stream_accepts_product_session_id(tmp_path: Path):
     assert completion["session_id"] == "sess-stream-test"
     assert completion["trace_id"] == started["trace_id"]
     assert completion["artifact_session_id"]
+
+
+def test_query_stream_returns_reference_count_diagnostics(tmp_path: Path):
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    (docs_dir / "paper.html").write_text(
+        """
+        <body>
+          <h2>References</h2>
+          <p>[1] Alpha reference.</p>
+          <p>[2] Beta reference.</p>
+        </body>
+        """,
+        encoding="utf-8",
+    )
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/v1/query/stream",
+        json={
+            "question": "How many references are in the paper?",
+            "docs_dir": str(docs_dir),
+            "index_dir": str(tmp_path / "index"),
+            "artifact_root": str(tmp_path / "artifacts"),
+        },
+    )
+
+    assert response.status_code == 200
+    events = _parse_sse_events(response.text)
+    graph_completed = json.loads(events[1]["data"])
+    completion = json.loads(events[2]["data"])
+
+    assert graph_completed["intent"] == "count"
+    assert graph_completed["strategy"] == "reference_count"
+    assert graph_completed["tool_name"] == "reference_count_tool"
+    assert graph_completed["tool_status"] == "ok"
+    assert completion["intent"] == "count"
+    assert completion["strategy"] == "reference_count"
+    assert completion["tool_result"]["count"] == 2
 
 
 def test_query_stream_reuses_sprint4_api_key_protection():

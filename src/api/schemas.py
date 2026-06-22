@@ -1,5 +1,5 @@
 """API 请求/响应 Pydantic 模型。"""
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -41,6 +41,14 @@ class QueryResponse(BaseModel):
     confidence: float
     plan: list[ResearchStep] = Field(default_factory=list)
     citations: list[Citation] = Field(default_factory=list)
+    intent: str | None = None
+    strategy: str | None = None
+    intent_confidence: float | None = None
+    tool_name: str | None = None
+    tool_status: str | None = None
+    tool_result: dict[str, Any] | None = None
+    fallback_reason: str | None = None
+    diagnostics: dict[str, Any] | None = None
     model_tier_used: str | None = None
     synthesis_mode: str | None = None
     synthesis_status: str | None = None

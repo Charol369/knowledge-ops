@@ -26,13 +26,16 @@ KnowledgeOps 的下一阶段目标是从单路径 RAG 问答升级为真实企�
 | API | FastAPI `/api/v1/query` 和 `/api/v1/query/stream` 已接入 graph | integration tests |
 | LLM synthesis | OpenAI-compatible `deepseek-v4-pro` 已进入主查询 synthesis 链路 | API smoke 返回 `synthesis_mode=llm` / `synthesis_status=ok` |
 | Session / trace | 正常 UI 自动生成 `session_id`；API 每次请求自动生成 `trace_id`，并保留 `thread_id` 作为兼容/调试覆盖 | `tests/integration/test_query_api.py` / `tests/integration/test_streaming.py` |
+| Intent-aware QA routing | deterministic intent router + graph strategy dispatch 已接入 | `tests/unit/test_intent_router.py` / `tests/unit/test_agents.py` |
+| Document tools | reference count、section lookup、table blocked path 已接入 | `tests/unit/test_reference_count_tool.py` / `tests/unit/test_section_lookup_tool.py` |
+| API diagnostics | `/api/v1/query` 和 `/api/v1/query/stream` 返回 `intent`、`strategy`、`tool_*`、`fallback_reason` | `tests/integration/test_query_api.py` / `tests/integration/test_streaming.py` |
 | Retrieval | FAISS/hash dense + BM25 + RRF hybrid retrieval | unit/integration tests |
 | Citation | answer citation extraction + verifier | unit tests |
 | Fallback | LLM synthesis 失败时 deterministic fallback | graph state / tests |
 | Feedback | `/api/v1/feedback` + 本地 Langfuse score smoke | docs/docker-compose-smoke.md |
 | Docker local stack | app + Milvus + Langfuse + ClickHouse + Postgres + Redis + MinIO 本地 smoke | docs/docker-compose-smoke.md |
 | CI | GitHub Actions green | README badge / Actions run |
-| Tests | 当前本地测试通过 | `88 passed, 3 warnings` |
+| Tests | 当前本地测试通过 | `107 passed, 3 warnings` |
 
 当前不能声明为已完成：
 
@@ -189,16 +192,23 @@ Acceptance:
 
 ### P0 Requirements
 
+Implementation design and task breakdown:
+
+```text
+Step 6 technical design: docs/p0-intent-routing-design.md
+Step 7 task breakdown: docs/p0-implementation-plan.md
+```
+
 | ID | Requirement | Acceptance |
 |---|---|---|
-| P0-R1 | Query Intent Router | classify `definition`, `summary`, `count`, `list`, `section_lookup`, `table_query`, `no_answer` |
-| P0-R2 | Intent-aware graph routing | graph chooses retrieval/tool strategy based on intent |
-| P0-R3 | Reference count tool | count references deterministically or return precise blocked reason |
-| P0-R4 | Section lookup tool | locate section by heading/number and return evidence |
+| P0-R1 | Query Intent Router | 已完成：deterministic router classifies `definition`, `count`, `section_summary`, `list`, `compare`, `table_query`, `no_answer`, `unknown` |
+| P0-R2 | Intent-aware graph routing | 已完成：graph dispatches hybrid retrieval / reference count / section lookup / table blocked / blocked strategy |
+| P0-R3 | Reference count tool | 已完成：counts references deterministically or returns precise blocked reason |
+| P0-R4 | Section lookup tool | 已完成：locates numbered section evidence or returns precise blocked reason |
 | P0-R5 | Automatic session/trace | 已完成：normal UI 自动生成 `session_id`；API 自动生成单次请求 `trace_id`；旧 `thread_id` 仅作为调试覆盖 |
-| P0-R6 | API diagnostics | response includes `intent`, `strategy`, `tool_status`, `fallback_reason` |
+| P0-R6 | API diagnostics | 已完成 API/SSE response fields；Streamlit diagnostics display 留到 Task 7 |
 | P0-R7 | LLM synthesis stability | structured output + local citation rendering; fallback reason surfaced |
-| P0-R8 | Regression tests | tests for core intents and fallback |
+| P0-R8 | Regression tests | Task 1-5 unit/integration tests 已补；P0 eval artifact 留到 Task 8 |
 
 ### P1 Requirements
 
@@ -279,3 +289,10 @@ P0 is complete only when all are true:
 - Fallback path returns a visible `fallback_reason`.
 - Regression tests pass locally.
 - README/status docs are updated with evidence-backed claims only.
+
+Current P0 boundary:
+
+```text
+Task 1-5 are implemented and tested.
+Task 6-10 remain pending: deterministic tool-result answer pinning, UI diagnostics display, intent eval artifact, final status sync, commit/push.
+```

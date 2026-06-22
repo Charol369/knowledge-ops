@@ -182,7 +182,7 @@ MCP exposes retrieval and summarization capabilities as standard tools/resources
 
 Measured:
 
-- local tests: `88 passed, 3 warnings`;
+- local tests: `107 passed, 3 warnings`;
 - benchmark smoke: dense/hybrid top-5 retrieval returns evidence from local data;
 - small local retrieval eval: dense Hit@5 / Recall@5 `0.75`, hybrid Hit@5 / Recall@5 `1.0` on 20 source/page labeled cases;
 - local API/Streamlit/feedback/streaming smoke.

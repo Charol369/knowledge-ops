@@ -18,7 +18,7 @@ Verified local baseline:
 
 ```text
 uv run pytest -q
-# 88 passed, 3 warnings
+# 107 passed, 3 warnings
 ```
 
 External interface smoke:
@@ -65,7 +65,7 @@ Do not add new KnowledgeOps features until the project has been converted into a
 
 The next work is not another implementation Sprint. It is portfolio hardening:
 
-1. Keep status documents aligned with real command output: `88 passed`, Docker Compose local Langfuse trace/score smoke, external interface smoke artifact, and 20-case hybrid `1.0` retrieval result.
+1. Keep status documents aligned with real command output: `107 passed`, Docker Compose local Langfuse trace/score smoke, external interface smoke artifact, and 20-case hybrid `1.0` retrieval result.
 2. Add implementation-boundary tables to README and architecture docs.
 3. Persist benchmark/eval outputs with `--output`.
 4. Keep query transform and rerank as optional config-gated enhancements.

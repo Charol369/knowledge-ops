@@ -122,9 +122,10 @@ Current implemented flow:
 
 ```text
 question
+-> intent_router
 -> planner
--> retrieval_orchestrator
--> dense + BM25 + RRF
+-> retrieval_orchestrator / tool dispatch
+-> dense + BM25 + RRF OR reference_count_tool OR section_lookup_tool OR blocked table path
 -> context_builder
 -> LLM synthesis if enabled
 -> reporter
@@ -135,11 +136,11 @@ question
 Current gap:
 
 ```text
-No robust intent routing.
-No structure-aware tools for count/table/section queries.
 No ACL filtering.
 No production embedding/rerank verification.
 No persisted query trace store beyond artifacts/local metrics.
+No Streamlit diagnostics panel for intent/tool fields yet.
+No P0 intent eval artifact yet.
 ```
 
 ## 5. Intent-based Workflows
@@ -279,9 +280,7 @@ Workflow:
 ```text
 classify table_query
 -> table_lookup_tool
--> table block retrieval
--> deterministic table result
--> LLM explanation
+-> blocked path in P0 because table parsing/indexing is unavailable
 ```
 
 Acceptance:
@@ -393,6 +392,13 @@ Some values exist in response or local metrics, but there is no persistent query
 
 ## 10. P0 Workflow Acceptance
 
+Implementation design and task breakdown:
+
+```text
+Step 6 technical design: docs/p0-intent-routing-design.md
+Step 7 task breakdown: docs/p0-implementation-plan.md
+```
+
 P0 workflow enhancement is complete when:
 
 - Query response includes `intent` and `strategy`.
@@ -401,3 +407,10 @@ P0 workflow enhancement is complete when:
 - Section lookup questions do not rely on unrelated top-k chunks.
 - Fallback reason is visible in API and UI.
 - Tests cover normal, blocked and fallback paths.
+
+Current implementation boundary:
+
+```text
+Task 1-5 are implemented: API/graph schema, deterministic router, reference count tool, section lookup tool, table blocked path, and graph strategy dispatch.
+Task 6-10 remain pending: final answer pinning for tool results, UI diagnostics display, P0 intent eval artifact, docs finalization, commit/push.
+```

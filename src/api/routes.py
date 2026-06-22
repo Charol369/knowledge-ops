@@ -38,6 +38,7 @@ def _run_query(req: QueryRequest, trace_id: str | None = None) -> QueryResponse:
     effective_trace_id = _resolve_request_trace_id(req, trace_id=trace_id)
     result = run_research_graph(
         question=req.question,
+        intent=req.intent,
         thread_id=effective_trace_id,
         docs_dir=req.docs_dir,
         index_dir=req.index_dir,
@@ -72,6 +73,14 @@ def _query_result_to_response(result: dict) -> QueryResponse:
         confidence=float(verification.get("confidence", result.get("confidence", 0.0))),
         plan=plan,
         citations=citations,
+        intent=result.get("intent"),
+        strategy=result.get("strategy"),
+        intent_confidence=result.get("intent_confidence"),
+        tool_name=result.get("tool_name"),
+        tool_status=result.get("tool_status"),
+        tool_result=result.get("tool_result"),
+        fallback_reason=result.get("fallback_reason") or result.get("blocked_reason"),
+        diagnostics=result.get("diagnostics"),
         model_tier_used=result.get("model_tier"),
         synthesis_mode=result.get("synthesis_mode"),
         synthesis_status=result.get("synthesis_status"),
@@ -115,6 +124,10 @@ async def query_stream(req: QueryRequest):
             {
                 "stage": "graph_completed",
                 "trace_id": response.trace_id,
+                "intent": response.intent,
+                "strategy": response.strategy,
+                "tool_name": response.tool_name,
+                "tool_status": response.tool_status,
                 "plan": [step.model_dump(mode="json") for step in response.plan],
                 "citations_count": len(response.citations),
                 "artifact_session_id": response.artifact_session_id,

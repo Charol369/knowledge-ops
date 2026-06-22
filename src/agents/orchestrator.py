@@ -10,6 +10,7 @@ from typing import Any
 from langchain_core.documents import Document
 
 from src.config import settings
+from src.agents.document_tools import blocked_table_lookup_result, count_references, lookup_section
 from src.ingest.embedder import get_embedder
 from src.ingest.loaders import load_directory
 from src.ingest.splitters import split_recursive
@@ -142,8 +143,46 @@ class RetrievalOrchestrator:
 
 def retrieval_orchestrator_node(state: dict[str, Any]) -> dict[str, Any]:
     execution_path = [*state.get("execution_path", []), "retrieval_orchestrator"]
+    strategy = state.get("strategy") or "hybrid_retrieval"
 
-    if state.get("evidence"):
+    if strategy == "blocked":
+        evidence = []
+        blocked_reason = "The request cannot be answered from the available knowledge base."
+        tool_status = "blocked"
+        tool_result = {
+            "status": "blocked",
+            "blocked_reason": blocked_reason,
+            "evidence": [],
+        }
+    elif strategy == "table_lookup":
+        result = blocked_table_lookup_result()
+        evidence = []
+        blocked_reason = str(result["blocked_reason"])
+        tool_status = "blocked"
+        tool_result = result
+    elif strategy == "reference_count":
+        result = count_references(state.get("docs_dir", "data"))
+        tool_result = result.as_dict()
+        evidence = result.evidence or []
+        blocked_reason = result.blocked_reason
+        tool_status = result.status
+    elif strategy == "section_lookup":
+        result = lookup_section(
+            state.get("docs_dir", "data"),
+            state.get("question", ""),
+            section_target=state.get("intent_target"),
+        )
+        tool_result = result.as_dict()
+        evidence = result.evidence or []
+        blocked_reason = result.blocked_reason
+        tool_status = result.status
+    else:
+        tool_result = state.get("tool_result")
+        tool_status = state.get("tool_status")
+
+    if strategy in {"blocked", "table_lookup", "reference_count", "section_lookup"}:
+        pass
+    elif state.get("evidence"):
         evidence = list(state["evidence"])
         blocked_reason = None
     else:
@@ -168,10 +207,23 @@ def retrieval_orchestrator_node(state: dict[str, Any]) -> dict[str, Any]:
         evidence=evidence,
         artifact_context=state.get("artifact_context"),
     )
+    diagnostics = {
+        "intent": state.get("intent"),
+        "strategy": strategy,
+        "tool_name": state.get("tool_name"),
+        "tool_status": tool_status,
+        "fallback_reason": blocked_reason,
+        "retrieval_top_k": state.get("top_k") or settings.top_k_final,
+        "route_reason": state.get("route_reason"),
+    }
     return {
         **state,
         "evidence": evidence,
         "context": context,
         "blocked_reason": blocked_reason,
+        "fallback_reason": blocked_reason,
+        "tool_status": tool_status,
+        "tool_result": tool_result,
+        "diagnostics": diagnostics,
         "execution_path": execution_path,
     }

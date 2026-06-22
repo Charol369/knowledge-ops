@@ -14,6 +14,7 @@ from uuid import uuid4
 from langgraph.graph import END, START, StateGraph
 
 from src.agents.memory import get_checkpointer
+from src.agents.intent_router import intent_router_node
 from src.agents.orchestrator import retrieval_orchestrator_node
 from src.agents.planner import planner_node
 from src.agents.reporter import reporter_node
@@ -27,6 +28,17 @@ from src.retrieval.artifact_store import ArtifactStore
 class AgentState(TypedDict):
     question: str
     intent: str | None
+    requested_intent: str | None
+    normalized_question: str | None
+    intent_confidence: float | None
+    intent_target: str | None
+    strategy: str | None
+    route_reason: str | None
+    tool_name: str | None
+    tool_status: str | None
+    tool_result: dict[str, Any] | None
+    fallback_reason: str | None
+    diagnostics: dict[str, Any] | None
     complexity: str | None
     model_tier: str | None
     plan: list[str]
@@ -63,13 +75,15 @@ def route_after_reporter(state: AgentState) -> Literal["verifier", "finish"]:
 def build_graph():
     graph = StateGraph(AgentState)
 
+    graph.add_node("intent_router", intent_router_node)
     graph.add_node("planner", planner_node)
     graph.add_node("retrieval_orchestrator", retrieval_orchestrator_node)
     graph.add_node("synthesizer", synthesizer_node)
     graph.add_node("reporter", reporter_node)
     graph.add_node("verifier", verifier_node)
 
-    graph.add_edge(START, "planner")
+    graph.add_edge(START, "intent_router")
+    graph.add_edge("intent_router", "planner")
     graph.add_edge("planner", "retrieval_orchestrator")
     graph.add_edge("retrieval_orchestrator", "synthesizer")
     graph.add_edge("synthesizer", "reporter")
@@ -96,6 +110,7 @@ def _graph_invoke_config(trace_id: str) -> dict[str, Any]:
 
 def run_research_graph(
     question: str,
+    intent: str | None = None,
     thread_id: str | None = None,
     docs_dir: str | Path = "data",
     index_dir: str | Path = "data/faiss/sprint1",
@@ -110,6 +125,17 @@ def run_research_graph(
     initial_state: dict[str, Any] = {
         "question": question,
         "intent": None,
+        "requested_intent": intent,
+        "normalized_question": None,
+        "intent_confidence": None,
+        "intent_target": None,
+        "strategy": None,
+        "route_reason": None,
+        "tool_name": None,
+        "tool_status": None,
+        "tool_result": None,
+        "fallback_reason": None,
+        "diagnostics": None,
         "complexity": None,
         "model_tier": "tier2",
         "plan": [],

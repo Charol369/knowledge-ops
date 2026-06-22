@@ -23,6 +23,7 @@ def test_run_research_graph_executes_plan_retrieve_synthesize_report_verify(tmp_
     )
 
     assert result["execution_path"] == [
+        "intent_router",
         "planner",
         "retrieval_orchestrator",
         "synthesizer",
@@ -41,6 +42,8 @@ def test_run_research_graph_executes_plan_retrieve_synthesize_report_verify(tmp_
         }
     ]
     assert result["verification"]["status"] == "ok"
+    assert result["intent"] == "unknown"
+    assert result["strategy"] == "hybrid_retrieval"
     assert result["structured_answer"]["confidence"] > 0
     assert result["artifact_session_id"]
     assert (tmp_path / result["artifact_session_id"] / "plan.json").exists()
@@ -68,6 +71,35 @@ def test_run_research_graph_uses_local_docs_and_context_builder(tmp_path: Path):
     assert result["context"]["context"].startswith("Evidence:")
     assert len(result["evidence"]) >= 1
     assert all(item["source"] for item in result["evidence"])
+
+
+def test_run_research_graph_routes_reference_count_tool(tmp_path: Path):
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    (docs_dir / "paper.html").write_text(
+        """
+        <body>
+          <h2>References</h2>
+          <p>[1] Alpha reference.</p>
+          <p>[2] Beta reference.</p>
+        </body>
+        """,
+        encoding="utf-8",
+    )
+
+    result = run_research_graph(
+        question="How many references are in the paper?",
+        docs_dir=docs_dir,
+        index_dir=tmp_path / "index",
+        artifact_root=tmp_path / "artifacts",
+    )
+
+    assert result["intent"] == "count"
+    assert result["strategy"] == "reference_count"
+    assert result["tool_name"] == "reference_count_tool"
+    assert result["tool_status"] == "ok"
+    assert result["tool_result"]["count"] == 2
+    assert result["evidence"][0]["reference_count"] == 2
 
 
 def test_retrieval_orchestrator_optional_transform_and_rerank_fallback(tmp_path: Path, monkeypatch):

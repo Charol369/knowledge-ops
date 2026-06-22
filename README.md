@@ -88,6 +88,10 @@ graph TD
 | FastAPI `/api/v1/query` | 已接入 | graph-backed 查询入口 |
 | FastAPI `/api/v1/query/stream` | 已接入 | 有界 SSE wrapper，非 token-level LLM streaming |
 | Streamlit 问答入口 | 已接入 | 普通用户自动生成 session/trace；手动 trace/thread 覆盖已移入高级调试设置 |
+| Intent-aware QA routing | 已接入 | deterministic intent router；API/SSE 返回 `intent`、`strategy`、`tool_*` diagnostics |
+| Reference count tool | 已接入 | `reference_count_tool` 确定性计数；失败时返回 precise blocked reason |
+| Section lookup tool | 已接入 | `section_lookup_tool` 先定位 section evidence；缺失时 blocked，不用无关 top-k 代答 |
+| Table query boundary | 已接入 blocked path | P0 不解析表格；返回 table parser/index unavailable，不编造表格内容 |
 | `/api/v1/feedback` | 已接入 | 本地内存捕获；Docker Compose 本地 Langfuse score 已验证 |
 | PDF / Word / HTML ingest | 已接入 | 本地 loader + splitter，保留 source/page metadata |
 | FAISS dense retrieval | 已接入 | 默认本地可跑；测试默认使用 hash embedding |
@@ -184,6 +188,8 @@ uv run python scripts/smoke_external_interfaces.py --strict --include-container-
 - [产品工作流](docs/product-workflows.md) - 文档入库、在线问答、意图路由、评测和观测流程
 - [产品 API 契约](docs/product-api-contract.md) - 查询、流式查询、文档、反馈和诊断接口目标契约
 - [产品数据模型](docs/product-data-model.md) - 文档、chunk、ACL、query trace、feedback 和 eval 目标模型
+- [P0 Intent-Aware QA Core 设计](docs/p0-intent-routing-design.md) - 意图路由、工具边界、LangGraph 工作流和 API diagnostics 技术方案
+- [P0 实施任务拆分](docs/p0-implementation-plan.md) - 下一轮编码任务、文件范围、测试矩阵、验收命令和提交边界
 - [开发执行文档](docs/development.md) - 项目 1 完整实现的 `/goal` prompt + 拆分建议
 - [API 文档](docs/api.md) - REST + SSE + Pydantic schema
 - [评测报告](docs/benchmark.md) - 本地 benchmark smoke + 未测指标边界
@@ -209,7 +215,7 @@ uv run python scripts/smoke_external_interfaces.py --strict --include-container-
 | **Sprint 4** | W5 (6/15-6/21) | Policy Layer + LLMOps | Done，本地 dry-run / smoke |
 | **Sprint 5** | W6 (6/22-6/30) | Streaming、feedback、demo、benchmark、docs、Docker Compose local smoke | 本地完成；Docker Compose + 本地 Langfuse trace/score 已验证；云部署、视频、申请为手动边界 |
 
-当前本地验证基线：`uv run pytest -q` 返回 `88 passed, 3 warnings`；`uv run ruff check src tests frontend\app.py` 返回 `All checks passed!`。warnings 来自 FAISS/SWIG 第三方类型。
+当前本地验证基线：`uv run pytest -q` 返回 `107 passed, 3 warnings`；`uv run ruff check src tests frontend\app.py` 返回 `All checks passed!`。warnings 来自 FAISS/SWIG 第三方类型。
 
 ## 📂 目录结构
 
