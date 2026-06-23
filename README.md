@@ -109,7 +109,7 @@ graph TD
 | Langfuse | 已接入，本地 Compose 已验证 | 默认 `.env.example` disabled；Docker Compose 中本地 trace/score 已验证，见 `docs/docker-compose-smoke.md` |
 | RAGAS | dry-run scaffold | 未运行真实 RAGAS 指标 |
 | Docker Compose | 已完成本地全量联调 | `app + Milvus + Langfuse web/worker + ClickHouse + Postgres + Redis + MinIO` 已本机 smoke |
-| Paid OpenAI-compatible API | 已接入主链路并验证 | 当前供应商可列 18 个模型；`deepseek-v4-pro` 已在 `/api/v1/query` synthesis 主链路返回 `synthesis_mode=llm` / `synthesis_status=ok`；`deepseek-v4-flash` 最小调用通过；`deepseek-chat` / `deepseek-reasoner` 在当前供应商不可用 |
+| Paid OpenAI-compatible API | 已接入主链路并验证 | 2026-06-23 最新 smoke 中当前供应商可列 17 个模型；`deepseek-v4-pro` 已在 `/api/v1/query` synthesis 主链路返回 `synthesis_mode=llm` / `synthesis_status=ok`；`deepseek-v4-flash` 最小调用通过；`deepseek-chat` / `deepseek-reasoner` 在当前供应商不可用 |
 | Locust / 100 QPS | manual boundary | 脚本存在，未运行 100 QPS x 5min |
 | Cloud deployment | manual boundary | 未声明公网部署完成 |
 
@@ -149,7 +149,7 @@ docker compose up -d --build  # 启动 Milvus standalone + Langfuse + 应用
 #   Milvus        http://localhost:19530
 ```
 
-2026-06-22 已在本机完成 Docker Compose 全量 smoke：`app`、`milvus`、`langfuse-web`、`langfuse-worker`、`clickhouse`、`postgres`、`redis`、`minio` 均启动；API query、SSE、feedback、Langfuse trace/score 落库已验证。证据见 [docs/docker-compose-smoke.md](docs/docker-compose-smoke.md)。云部署、真实 `bge-m3` Docker 镜像、真实 RAGAS、Locust 100 QPS 仍未完成。
+2026-06-23 已在本机重新完成 P0 closure 后 Docker Compose 全量 smoke：`app`、`milvus`、`langfuse-web`、`langfuse-worker`、`clickhouse`、`postgres`、`redis`、`minio` 均启动；API query、SSE、feedback、Langfuse trace/score 落库已验证。证据见 [docs/docker-compose-smoke.md](docs/docker-compose-smoke.md)。云部署、真实 `bge-m3` Docker 镜像、真实 RAGAS、Locust 100 QPS 仍未完成。
 
 ### API Smoke
 

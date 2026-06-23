@@ -138,7 +138,7 @@ graph TD
 | RAGAS | dry-run scaffold | 未运行真实 RAGAS 指标 |
 | Docker Compose / Milvus / Langfuse stack | 已完成本地全量联调 | `app + Milvus + Langfuse web/worker + ClickHouse + Postgres + Redis + MinIO` 已本机 smoke |
 | LLM synthesis | 已接入主链路 | `LLM_SYNTHESIS_ENABLED=true` 时用 OpenAI-compatible Chat Completions 生成自然语言答案，并由 verifier 校验 citation；失败时 deterministic fallback |
-| Paid OpenAI-compatible API | 已接入主链路并验证 | 当前供应商可列 18 个模型；`deepseek-v4-pro` 已在 `/api/v1/query` synthesis 主链路返回 `synthesis_mode=llm` / `synthesis_status=ok`；`deepseek-v4-flash` 最小调用通过；`deepseek-chat` / `deepseek-reasoner` 在当前供应商不可用 |
+| Paid OpenAI-compatible API | 已接入主链路并验证 | 2026-06-23 最新 smoke 中当前供应商可列 17 个模型；`deepseek-v4-pro` 已在 `/api/v1/query` synthesis 主链路返回 `synthesis_mode=llm` / `synthesis_status=ok`；`deepseek-v4-flash` 最小调用通过；`deepseek-chat` / `deepseek-reasoner` 在当前供应商不可用 |
 | Locust / 100 QPS | manual boundary | 脚本存在，未声明已压测达标 |
 | Cloud deployment | manual boundary | 未声明已公网部署 |
 

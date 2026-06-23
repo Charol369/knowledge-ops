@@ -1,6 +1,6 @@
 # KnowledgeOps Product Requirements
 
-Date: 2026-06-22
+Date: 2026-06-23
 
 Status: Draft for review
 
@@ -208,7 +208,7 @@ Step 7 task breakdown: docs/p0-implementation-plan.md
 | P0-R5 | Automatic session/trace | 已完成：normal UI 自动生成 `session_id`；API 自动生成单次请求 `trace_id`；旧 `thread_id` 仅作为调试覆盖 |
 | P0-R6 | API diagnostics | 已完成 API/SSE response fields；Streamlit advanced diagnostics 展示 intent/strategy/tool/fallback |
 | P0-R7 | LLM synthesis stability | structured output + local citation rendering；reference count 结果已由 deterministic tool answer pinning 固定，blocked path 不被 LLM 覆盖 |
-| P0-R8 | Regression tests | Task 1-8 unit/integration tests 已补；P0 intent eval artifact 5/5 通过 |
+| P0-R8 | Regression tests | Task 1-10 已完成并推送到 P0 closure；P0 intent eval artifact 5/5 通过 |
 
 ### P1 Requirements
 
@@ -293,6 +293,6 @@ P0 is complete only when all are true:
 Current P0 boundary:
 
 ```text
-Task 1-8 are implemented and tested.
-Task 9-10 remain pending until final validation, docs closure, commit, and push are complete.
+Task 1-10 are implemented, validated, documented, committed, and pushed through P0 closure commit `74d07f3`.
+Post-P0 Docker/LLM/Langfuse runtime smoke was rerun on 2026-06-23 and recorded separately.
 ```

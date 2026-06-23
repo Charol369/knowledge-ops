@@ -14,7 +14,7 @@
 | P0 intent QA regression | 已执行 | `uv run python scripts/evaluate_intent_qa.py --dataset eval/intent_qa.jsonl --docs-dir data --index-dir data/faiss/sprint1 --embedding-backend hash --output eval/results/intent_qa_latest.json` 返回 5/5 passed |
 | Final benchmark smoke | 已执行 | `uv run python scripts/benchmark.py --retrieval dense,hybrid --top-k 5 --output eval/results/benchmark_latest.json` |
 | Small retrieval eval | 已执行 | `uv run python scripts/evaluate_retrieval.py --dataset eval/retrieval_qa.jsonl --docs-dir data --retrieval dense,hybrid --top-k 5 --embedding-backend hash --output eval/results/retrieval_latest.json` |
-| Docker Compose full-stack smoke | 已执行 | `docker compose up -d --build`；`app`、Milvus、Langfuse、ClickHouse、Postgres、Redis、MinIO 均启动，见 `docs/docker-compose-smoke.md` |
+| Docker Compose full-stack smoke | 已执行 | 2026-06-23 复跑 `docker compose up -d --build`；`app`、Milvus、Langfuse、ClickHouse、Postgres、Redis、MinIO 均启动，见 `docs/docker-compose-smoke.md` |
 | Local Langfuse trace / score | 已执行 | API query + feedback 后，ClickHouse `traces` 和 `scores` 同 id 落库 |
 | External interface smoke artifact | 已执行 | `uv run python scripts/smoke_external_interfaces.py --strict --include-container-provider --output eval/results/external_smoke_latest.json`；15 个检查通过，旧别名按预期不可用 |
 | LLM synthesis 主链路 | 已执行 | `/api/v1/query` 返回 `synthesis_mode=llm`、`synthesis_status=ok`、`synthesis_model=deepseek-v4-pro`；无 key 或调用失败时 deterministic fallback |
@@ -28,7 +28,7 @@
 |---|---|---|
 | Cloud deployment | 手动边界 | 需要云账号、域名、密钥、镜像仓库或目标平台配置 |
 | Locust 100 QPS x 5min | 手动待跑 | 本次本地验证未启动长运行 API server 和 headless Locust 压测 |
-| OpenAI-compatible DeepSeek 命名模型 | 主链路已验证 | 当前供应商可列 18 个模型；`deepseek-v4-pro` 已用于 `/api/v1/query` synthesis；`deepseek-v4-flash` 最小调用返回 `ok`；`deepseek-chat` / `deepseek-reasoner` 在当前供应商不可用 |
+| OpenAI-compatible DeepSeek 命名模型 | 主链路已验证 | 2026-06-23 最新 smoke 中当前供应商可列 17 个模型；`deepseek-v4-pro` 已用于 `/api/v1/query` synthesis；`deepseek-v4-flash` 最小调用返回 `ok`；`deepseek-chat` / `deepseek-reasoner` 在当前供应商不可用 |
 | 真实 bge-m3 Docker runtime | 手动边界 | Docker app 使用 lightweight 依赖和 `hash` embedding；未下载 torch/sentence-transformers 大模型栈 |
 | 真实 RAGAS / 生产级 Recall@5 | 待真实数据集 | 当前只有 20 条本地 source/page 标注集；尚未覆盖多文档生产语料和答案质量 |
 
@@ -56,7 +56,7 @@
 - 支持本地 FAISS/hash embedding smoke、MCP server 接入路径、Docker Compose 本地 Langfuse trace/score smoke。
 - Sprint 5 本地 benchmark smoke 返回 `status=ok`、`documents=93`，dense / hybrid 均返回 5 条候选，最新输出可保存到 `eval/results/benchmark_latest.json`。
 - 20 条本地 source/page 标注集上 dense Hit@5 / Recall@5 为 `0.75`，hybrid Hit@5 / Recall@5 为 `1.0`，最新输出可保存到 `eval/results/retrieval_latest.json`。
-- 2026-06-22 本地 Docker Compose 全栈 smoke 通过，Langfuse trace/score 在本地 ClickHouse 同 id 落库。
+- 2026-06-23 本地 Docker Compose 全栈 smoke 复跑通过，Langfuse trace/score 在本地 ClickHouse 同 id 落库。
 
 不可声明为事实，除非后续真实执行并记录输出：
 

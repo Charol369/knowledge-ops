@@ -1,6 +1,6 @@
 # KnowledgeOps Product Workflows
 
-Date: 2026-06-22
+Date: 2026-06-23
 
 Status: Draft for review
 
@@ -411,6 +411,6 @@ P0 workflow enhancement is complete when:
 Current implementation boundary:
 
 ```text
-Task 1-8 are implemented: API/graph schema, deterministic router, reference count tool, section lookup tool, table blocked path, graph strategy dispatch, deterministic tool-result answer pinning, Streamlit advanced diagnostics, and P0 intent eval artifact.
-Task 9-10 remain pending until final docs sync, validation, commit, and push are complete.
+Task 1-10 are implemented, validated, documented, committed, and pushed through P0 closure commit `74d07f3`.
+Next workflow boundary should select one P1 scope first; recommended order is larger eval set, QueryTrace artifact/schema persistence, then Docker/LLM smoke automation.
 ```

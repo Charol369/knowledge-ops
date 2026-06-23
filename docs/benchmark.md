@@ -96,7 +96,7 @@ Sprint 5 未测项：
 - RAGAS：脚本输出 `pending_real_run`，未运行真实 RAGAS 指标。
 - QPS / P95：脚本输出 `pending_load_test`，未运行 Locust 100 QPS x 5min。
 - 单 query 成本：本地 hash embedding / deterministic fallback smoke 不产生真实 LLM 计费数据。
-- Docker Compose 全量联调：已在 2026-06-22 单独执行并记录，见下方 Docker Compose + Langfuse smoke 小节。
+- Docker Compose 全量联调：已在 2026-06-23 于 P0 closure 后复跑并记录，见下方 Docker Compose + Langfuse smoke 小节。
 - Cloud deployment、demo video、resume finalization、job applications：非代码自动化交付，不能声明为已自动完成。
 
 ## Sprint 5 小规模 Retrieval Hit@5 / Recall@5
@@ -114,7 +114,7 @@ Sprint 5 未测项：
 
 ## P0 Intent-Aware QA Regression
 
-测试日期：2026-06-22
+测试日期：2026-06-23
 
 测试环境：Windows 本地开发环境，Python 3.11.15，`uv run`，本地样本目录 `data`，数据集 `eval/intent_qa.jsonl`，embedding backend `hash`。该回归默认关闭 LLM synthesis，用 deterministic/fallback 路径验证 intent、strategy、tool status、tool result、citations 和 blocked behavior；它不是 RAGAS 或 LLM-as-judge 答案质量评测。
 
@@ -126,7 +126,7 @@ Sprint 5 未测项：
 
 ## Docker Compose + Local Langfuse Smoke
 
-测试日期：2026-06-22
+测试日期：2026-06-23
 
 测试环境：Windows 本地开发环境，Docker `29.4.3`，Docker Desktop `4.73.0`，Docker Compose `v5.1.3`。
 
@@ -137,11 +137,11 @@ Sprint 5 未测项：
 | `Invoke-WebRequest http://localhost:8000/health` | `200` | `{"status":"ok","version":"0.0.1"}` |
 | `Invoke-WebRequest http://localhost:3000` | `200` | Langfuse web HTML returned |
 | `Invoke-WebRequest http://localhost:9092/healthz` | `200` | Milvus health endpoint returned `OK` |
-| POST `/api/v1/query` | `200` | 返回 confidence `0.85`、5 条 citations、artifact session `20260622T065008Z-7380c05d` |
+| POST `/api/v1/query` | `200` | 返回 confidence `0.85`、2 条 citations、`synthesis_mode=llm`、`synthesis_model=deepseek-v4-pro`、artifact session `20260623T072832Z-83087f03` |
 | POST `/api/v1/feedback` | `200` | `langfuse_status=recorded` |
-| POST `/api/v1/query/stream` | passed | SSE 顺序为 `progress -> progress -> completion`，artifact session `20260622T065503Z-d21505ba` |
-| ClickHouse `traces` | trace found | Langfuse trace id `54c7f956ce5e27e7daf5fd007adc051e` |
-| ClickHouse `scores` | score found | score trace id 同为 `54c7f956ce5e27e7daf5fd007adc051e`，score value `1` |
+| POST `/api/v1/query/stream` | passed | SSE 顺序为 `progress -> graph_completed -> completion`，`synthesis_mode=llm`，artifact session `20260623T073314Z-080fc1d5` |
+| ClickHouse `traces` | trace found | Langfuse trace id `9efd064ae963eee4f129d58eeb8c12f0`，2 rows |
+| ClickHouse `scores` | score found | score trace id 同为 `9efd064ae963eee4f129d58eeb8c12f0`，score value `1` |
 
 本次 Docker smoke 修复了 4 个环境集成问题：
 
@@ -154,7 +154,7 @@ Sprint 5 未测项：
 
 ## Paid API Smoke
 
-测试日期：2026-06-22
+测试日期：2026-06-23
 
 当前 `.env` 中 OpenAI-compatible API key/base URL 可被 Docker app 读取，外部 endpoint 可返回模型列表。最新可复跑命令：
 
@@ -166,7 +166,7 @@ uv run python scripts/smoke_external_interfaces.py --strict --include-container-
 
 | 检查 | 结果 |
 |---|---|
-| `/models` | passed，返回 18 个模型，其中 DeepSeek 命名模型 2 个 |
+| `/models` | passed，返回 17 个模型，其中 DeepSeek 命名模型 2 个 |
 | `deepseek-v4-pro` | passed，最小请求返回 `ok` |
 | `deepseek-v4-flash` | passed，最小请求返回 `ok` |
 | Docker app container provider call | passed，容器内按 `.env` 配置调用 `deepseek-v4-pro` 返回 `ok` |

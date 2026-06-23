@@ -2,16 +2,16 @@
 
 Date: 2026-05-28
 
-Updated: 2026-06-22
+Updated: 2026-06-23
 
 ## Current State
 
 KnowledgeOps has completed the Sprint 1-5 local delivery baseline and has been pushed to GitHub.
 
-Latest pushed baseline commit before the current automatic session/trace round:
+Latest pushed P0 closure baseline before this status-sync round:
 
 ```text
-c4891b5 feat: add llm-backed product qa baseline
+74d07f3 feat: complete p0 intent qa closure
 ```
 
 Verified local baseline:
@@ -26,6 +26,7 @@ External interface smoke:
 ```text
 uv run python scripts/smoke_external_interfaces.py --strict --include-container-provider --output eval/results/external_smoke_latest.json
 # summary.status=ok, checks_total=15
+# current provider exposes 17 models in total
 # current provider exposes deepseek-v4-pro and deepseek-v4-flash
 # deepseek-chat and deepseek-reasoner are expected-unavailable on this provider
 ```
@@ -50,7 +51,7 @@ Implemented and locally verified:
 
 Known delivery boundaries:
 
-- Docker Compose full integration has been run locally for `app + Milvus + Langfuse web/worker + ClickHouse + Postgres + Redis + MinIO`.
+- Docker Compose full integration was rerun locally on 2026-06-23 for `app + Milvus + Langfuse web/worker + ClickHouse + Postgres + Redis + MinIO`.
 - Cloud deployment has not been completed.
 - Locust 100 QPS x 5min has not been run.
 - Real RAGAS metrics and production-scale Recall@5 have not been measured against a larger labeled QA set.
@@ -148,7 +149,7 @@ Safe claims:
 - Implemented local document ingestion, FAISS dense retrieval, BM25 + RRF hybrid retrieval, context construction, artifact persistence, citation validation, MCP tools, auth/rate limiting, SSE streaming, automatic session/trace, feedback capture, and Streamlit knowledge QA UI.
 - Added deterministic local fallback paths so smoke tests do not require paid external models or real credentials.
 - Maintained explicit delivery boundaries for Docker, cloud deployment, QPS, RAGAS, Recall@5, and cost metrics.
-- Verified local behavior with `88` tests passing.
+- Verified local behavior with `112` tests passing and `3` third-party warnings.
 - Measured 20 local source/page labeled retrieval cases: dense Hit@5 / Recall@5 `0.75`, hybrid Hit@5 / Recall@5 `1.0`.
 
 Unsafe claims until measured:
@@ -254,17 +255,17 @@ Done when:
 Use this order unless a higher-priority blocker appears:
 
 1. Keep `knowledge-ops` status and docs aligned with current command output.
-2. Persist benchmark and retrieval eval JSON artifacts.
-3. Keep optional query transform / rerank behind default-off config flags.
-4. Add CI and wait for a real green run before adding badges.
-5. Prepare demo video script and screenshots.
+2. Expand the product QA eval set beyond the current 5-case P0 intent regression and 20-case retrieval set.
+3. Solidify QueryTrace artifact/schema persistence before adding multi-user ACL.
+4. Automate Docker/LLM smoke checks where safe, while keeping real credentials out of CI.
+5. Keep optional query transform / rerank behind default-off config flags.
 6. Only then consider real bge-m3, real RAGAS, Locust, cloud deployment, and production-grade Langfuse/Postgres/Redis hardening.
 7. Create `ts-detect-agent` repository and project 2 plan after project 1 assets are usable.
 
 ## Explicit Non-Priorities
 
 - Do not prioritize cloud deployment.
-- Do not prioritize paid LLM integration.
+- Do not prioritize adding more paid LLM providers; the current OpenAI-compatible path is already connected and should next get cost/fallback/eval evidence.
 - Do not rewrite Streamlit as Next.js now.
 - Do not prioritize 100 QPS now.
 - Do not start project 2 before project 1 assets are coherent.

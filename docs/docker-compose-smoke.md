@@ -1,6 +1,6 @@
 # Docker Compose + Local Langfuse Smoke
 
-Date: 2026-06-22
+Date: 2026-06-23
 
 This document records the local full-stack Docker Compose smoke that was actually executed. It does not claim cloud deployment, production persistence, real bge-m3 inference, real RAGAS scoring, or 100 QPS load-test completion.
 
@@ -39,24 +39,24 @@ This document records the local full-stack Docker Compose smoke that was actuall
 | `Invoke-WebRequest http://localhost:8000/health` | `200`, `{"status":"ok","version":"0.0.1"}` |
 | `Invoke-WebRequest http://localhost:3000` | `200`, Langfuse web HTML returned |
 | `Invoke-WebRequest http://localhost:9092/healthz` | `200`, `OK` |
-| POST `/api/v1/query` | `200`, returned 3-step plan, 5 citations, confidence `0.85`, artifact session `20260622T065008Z-7380c05d` |
+| POST `/api/v1/query` | `200`, returned 3-step plan, 2 citations, confidence `0.85`, `synthesis_mode=llm`, `synthesis_model=deepseek-v4-pro`, artifact session `20260623T072832Z-83087f03` |
 | POST `/api/v1/feedback` | `200`, `langfuse_status=recorded` |
-| POST `/api/v1/query/stream` | `progress -> progress -> completion`, artifact session `20260622T065503Z-d21505ba` |
-| ClickHouse `traces` lookup | trace id `54c7f956ce5e27e7daf5fd007adc051e` present |
-| ClickHouse `scores` lookup | score attached to the same trace id `54c7f956ce5e27e7daf5fd007adc051e` |
+| POST `/api/v1/query/stream` | `progress -> graph_completed -> completion`, `synthesis_mode=llm`, artifact session `20260623T073314Z-080fc1d5` |
+| ClickHouse `traces` lookup | trace id `9efd064ae963eee4f129d58eeb8c12f0` present, 2 rows |
+| ClickHouse `scores` lookup | score attached to the same trace id `9efd064ae963eee4f129d58eeb8c12f0`, score value `1` |
 
 ## Trace Alignment
 
 Application-facing trace id:
 
 ```text
-docker-compose-langfuse-aligned-20260622
+post-p0-llm-smoke-20260623
 ```
 
 Langfuse/W3C trace id used for local trace and score:
 
 ```text
-54c7f956ce5e27e7daf5fd007adc051e
+9efd064ae963eee4f129d58eeb8c12f0
 ```
 
 The API still returns the application trace id. Internally, Langfuse tracing and feedback scoring map the application trace id to a deterministic 32-character lowercase hex trace id so trace and score are queryable under the same Langfuse id.
@@ -73,7 +73,7 @@ The API still returns the application trace id. Internally, Langfuse tracing and
 
 ## Paid API Check
 
-The configured OpenAI-compatible endpoint was reachable and `/models` returned 18 models. The current provider exposes two DeepSeek-named models:
+The configured OpenAI-compatible endpoint was reachable and `/models` returned 17 models. The current provider exposes two DeepSeek-named models:
 
 - `deepseek-v4-pro`
 - `deepseek-v4-flash`

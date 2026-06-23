@@ -2,7 +2,7 @@
 
 Date: 2026-05-28
 
-Updated: 2026-06-22
+Updated: 2026-06-23
 
 This document provides safe resume wording, a 5-minute project explanation, and interview FAQ for KnowledgeOps.
 
@@ -21,11 +21,11 @@ Use these facts in resumes, interviews, README summaries, and demo scripts.
 - Implemented MCP tool/resource layer for local retrieval and summarization services.
 - Implemented a Streamlit knowledge-base QA UI that calls the backend API, auto-generates product sessions/traces, keeps manual trace overrides in advanced/debug settings, and displays progress, plan, answer, citations, trace/session metadata, and feedback.
 - Added explicit LLM synthesis and deterministic fallback boundaries so tests do not require paid external models, while product runtime can use the configured OpenAI-compatible provider.
-- Verified the current local baseline with `88` passing tests and `3` third-party warnings.
+- Verified the current local baseline with `112` passing tests and `3` third-party warnings.
 - Measured a small 20-case local source/page retrieval set: dense Hit@5 / Recall@5 `0.75`, hybrid Hit@5 / Recall@5 `1.0`. This is not RAGAS or end-to-end answer-quality evaluation.
-- Verified local Docker Compose full-stack smoke on 2026-06-22: app, Milvus, Langfuse web/worker, ClickHouse, Postgres, Redis, and MinIO started locally.
-- Verified local Langfuse trace/score smoke on 2026-06-22: query trace and feedback score landed in ClickHouse under the same deterministic Langfuse trace id.
-- Verified the configured OpenAI-compatible paid endpoint can list 18 models and complete Chat Completions requests with `deepseek-v4-pro` and `deepseek-v4-flash`; `/api/v1/query` now uses `deepseek-v4-pro` for LLM synthesis when enabled; `deepseek-chat` and `deepseek-reasoner` are not exposed by the current provider.
+- Verified local Docker Compose full-stack smoke on 2026-06-23: app, Milvus, Langfuse web/worker, ClickHouse, Postgres, Redis, and MinIO started locally after the P0 closure commit.
+- Verified local Langfuse trace/score smoke on 2026-06-23: query trace and feedback score landed in ClickHouse under the same deterministic Langfuse trace id.
+- Verified the configured OpenAI-compatible paid endpoint can list 17 models and complete Chat Completions requests with `deepseek-v4-pro` and `deepseek-v4-flash`; `/api/v1/query` now uses `deepseek-v4-pro` for LLM synthesis when enabled; `deepseek-chat` and `deepseek-reasoner` are not exposed by the current provider.
 
 ## Unsafe Claims Until Measured
 
@@ -172,7 +172,7 @@ The project uses grounded evidence, citation extraction, citation validation, st
 
 ### How is cost controlled?
 
-The project includes complexity classification, model routing, local cache, retry/fallback policy, LLM synthesis, and deterministic fallbacks. OpenAI-compatible provider requests were verified on 2026-06-22 with `deepseek-v4-pro` and `deepseek-v4-flash`; `/api/v1/query` now returns `synthesis_mode=llm`, `synthesis_status=ok`, and `synthesis_model=deepseek-v4-pro` when the provider is configured. Real cost measurement is still pending Langfuse/provider usage aggregation.
+The project includes complexity classification, model routing, local cache, retry/fallback policy, LLM synthesis, and deterministic fallbacks. OpenAI-compatible provider requests were verified on 2026-06-23 with `deepseek-v4-pro` and `deepseek-v4-flash`; `/api/v1/query` now returns `synthesis_mode=llm`, `synthesis_status=ok`, and `synthesis_model=deepseek-v4-pro` when the provider is configured. Real cost measurement is still pending Langfuse/provider usage aggregation.
 
 ### What is MCP used for?
 
